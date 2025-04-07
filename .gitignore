@@ -1,0 +1,74 @@
+# General
+*.swp
+*.swo
+*.tmp
+*.bak
+*.log
+*.DS_Store
+
+# Build directories
+/build/
+/[Bb]uilds/
+**/[Dd]ebug
+/bin/
+/lib/
+/obj/
+/Release
+Release/
+
+
+# CMake-specific
+CMakeCache.txt
+Makefile
+CTestTestfile.cmake
+/[Bb]uild
+CMakeLists.txt.user
+CMakeFiles
+CMakeBuildFiles
+CMakeScripts
+Testing
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+
+# Compiled object files
+*.o
+*.obj
+*.so
+*.dll
+*.dylib
+*.lib
+*.a
+
+# Precompiled headers
+*.pch
+
+# Executables
+*.out
+*.app
+
+# IDE specific
+.idea/
+.vs/
+*.code-workspace
+*.ninja
+build.ninja
+*.vcxproj
+*.vcxproj.*
+**/*.vcxproj
+**/*.vcxproj.*
+
+# Debugging files
+*.pdb
+*.dmp
+*.stackdump
+
+# Coverage files
+*.gcno
+*.gcda
+coverage.info
+lcov.info
+
+Documents/
