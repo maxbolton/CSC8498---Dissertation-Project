@@ -2,6 +2,8 @@
 #include <iostream>
 #include "Window.h"
 #include "TutorialGame.h"
+#include "../NCLCoreClasses/GameTimer.h"
+
 
 using namespace NCL;
 using namespace CSC8503;
@@ -28,7 +30,7 @@ int main()
 		std::cerr << "Failed to create window!" << std::endl;
 		return -1;
 	}
-	//window->GetTimer().GetTimeDeltaSeconds();
+	window->GetTimer().GetTimeDeltaSeconds();
 
 	// Set up the game
 	TutorialGame* game = new TutorialGame();
@@ -39,7 +41,7 @@ int main()
 
 
 	while (window->UpdateWindow() && !Window::GetKeyboard()->KeyPressed(KeyCodes::ESCAPE)) {
-		//dt = window->GetTimer().GetTimeDeltaSeconds();
+		dt = window->GetTimer().GetTimeDeltaSeconds();
 		game->UpdateGame(dt);
 	}
 
