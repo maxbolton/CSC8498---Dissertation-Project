@@ -6,12 +6,20 @@ namespace NCL {
 
 		class GrassTile : public GameObject {
 			
+		public:
+			struct GrassBlade {
+				int id;
+				Vector3 position;
+			};
+
 		private:
 			
-			const float xLen = 16.0f;
-			const float yLen = 0.0f;
-			const float zLen = 16.0f;
+			float xLen = 16.0f;
+			float yLen = 0.0f;
+			float zLen = 16.0f;
+			int maxBlades = 256;
 
+			std::vector<GrassBlade> blades;
 
 
 		public:
@@ -20,11 +28,13 @@ namespace NCL {
 				AABBVolume* volume = new AABBVolume(Vector3(8, 0, 8));
 				this->SetBoundingVolume((CollisionVolume*)volume);
 				this->GetTransform()
-					.SetScale(Vector3(16, 1, 16))
+					.SetScale(Vector3(xLen, pos.y, zLen))
 					.SetPosition(pos);
 
 				this->SetPhysicsObject(new PhysicsObject(&this->GetTransform(), this->GetBoundingVolume()));
 				this->GetPhysicsObject()->SetInverseMass(0);
+
+				CalculateBlades();
 
 			}
 
@@ -34,7 +44,41 @@ namespace NCL {
 				delete boundingVolume;
 			}
 
+			float* GetXLen() {
+				return &xLen;
+			}
 
+			float* GetZLen() {
+				return &zLen;
+			}
+
+			int* GetMaxBlades() {
+				return &maxBlades;
+			}
+
+			std::vector<GrassBlade> GetBlades() {
+				return blades;
+			}
+
+			void CalculateBlades() {
+				int id = 0;
+
+				float area = xLen * zLen;
+				float density = maxBlades / area;
+
+				int bladesX = static_cast<int>(std::sqrt(density * xLen * zLen));
+				int bladesZ = maxBlades / bladesX;
+
+				for (int i = 0; i < bladesX; ++i) {
+					for (int j = 0; j < bladesZ; ++j) {
+						if (id >= maxBlades) return;
+						GrassBlade blade;
+						blade.id = id++;
+						blade.position = Vector3((i * (xLen / bladesX)) - xLen*0.5, this->GetTransform().GetPosition().y+2.0, (j * (zLen / bladesZ)) - zLen * 0.5);
+						blades.push_back(blade);
+					}
+				}
+			}
 
 
 		};

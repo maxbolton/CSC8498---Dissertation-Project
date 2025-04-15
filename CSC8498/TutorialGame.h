@@ -42,9 +42,11 @@ namespace NCL {
 			Mesh*	capsuleMesh = nullptr;
 			Mesh*	cubeMesh	= nullptr;
 			Mesh*	sphereMesh	= nullptr;
+			Mesh*	grassBladeMesh = nullptr;
 
 			Texture*	basicTex	= nullptr;
 			Shader*		basicShader = nullptr;
+			Shader*		grassShader = nullptr;
 		};
 	}
 }
