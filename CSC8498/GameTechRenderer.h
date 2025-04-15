@@ -18,6 +18,7 @@ namespace NCL {
 			Mesh*		LoadMesh(const std::string& name);
 			Texture*	LoadTexture(const std::string& name);
 			Shader*		LoadShader(const std::string& vertex, const std::string& fragment);
+			Shader*		LoadShader(const std::string& vertex, const std::string& fragment, const std::string& compute);
 
 		protected:
 			void NewRenderLines();

@@ -4,7 +4,7 @@
 #include "RenderObject.h"
 #include "TextureLoader.h"
 #include "GrassTile.h"
-
+#include "GameTimer.h"
 
 
 using namespace NCL;
@@ -40,6 +40,8 @@ void TutorialGame::InitialiseAssets() {
 	basicTex	= renderer->LoadTexture("checkerboard.png");
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag");
 
+	grassShader = renderer->LoadShader("GrassTile.vert", "GrassTile.frag");
+
 	InitCamera();
 	InitWorld();
 }
@@ -73,6 +75,8 @@ void TutorialGame::UpdateGame(float dt) {
 	physics->Update(dt);
 
 	renderer->Render();
+
+	grassTile->Update((Window::GetWindow()->GetTimer().GetTimeDeltaSeconds()));
 	Debug::UpdateRenderables(dt);
 }
 
@@ -90,12 +94,14 @@ void TutorialGame::InitWorld() {
 
 	//InitMixedGridWorld(15, 15, 3.5f, 3.5f);
 	//InitGameExamples();
-	InitDefaultFloor();
+	//InitDefaultFloor();
 
-	GrassTile* grassTile = new GrassTile(Vector3(0, 2, 0));
+	grassTile = new GrassTile(Vector3(0, 2, 0));
 
-	grassTile->SetRenderObject(new RenderObject(&grassTile->GetTransform(), cubeMesh, basicTex, basicShader));
-	grassTile->GetRenderObject()->SetColour(Vector4(Debug::GREEN));
+	grassTile->SetRenderObject(new RenderObject(&grassTile->GetTransform(), cubeMesh, basicTex, grassShader));
+	//grassTile->GetRenderObject()->SetColour(Vector4(Debug::GREEN));
+	grassTile->GetRenderObject()->SetGrassTile(grassTile->GetXLen(), grassTile->GetZLen(), grassTile->GetMaxBlades());
+
 
 	world->AddGameObject(grassTile);
 

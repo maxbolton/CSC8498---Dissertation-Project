@@ -15,6 +15,7 @@
 /obj/
 /Release
 Release/
+/[Oo]ut
 
 
 # CMake-specific

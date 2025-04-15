@@ -3,6 +3,7 @@
 #include "../NCLCoreClasses/KeyboardMouseController.h"
 #include "PhysicsSystem.h"
 #include "GameTechRenderer.h"
+#include "GrassTile.h"
 
 
 
@@ -45,6 +46,9 @@ namespace NCL {
 
 			Texture*	basicTex	= nullptr;
 			Shader*		basicShader = nullptr;
+			Shader*		grassShader = nullptr;
+
+			GrassTile* grassTile = nullptr;
 		};
 	}
 }

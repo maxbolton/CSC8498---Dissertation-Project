@@ -242,6 +242,11 @@ void GameTechRenderer::RenderCamera() {
 
 	int cameraLocation = 0;
 
+	int TileXLenLocation = 0;
+	int TileZLenLocation = 0;
+
+	int MaxBladesLocation = 0;
+
 	//TODO - PUT IN FUNCTION
 	glActiveTexture(GL_TEXTURE0 + 1);
 	glBindTexture(GL_TEXTURE_2D, shadowTex);
@@ -269,6 +274,14 @@ void GameTechRenderer::RenderCamera() {
 
 			cameraLocation = glGetUniformLocation(shader->GetProgramID(), "cameraPos");
 
+			//NOTE: In order to find the locations of uniforms they must actually be used
+			// Unused uniforms will be unoptimised out.
+			TileXLenLocation = glGetUniformLocation(shader->GetProgramID(), "xLen");
+			TileZLenLocation = glGetUniformLocation(shader->GetProgramID(), "zLen");
+
+			MaxBladesLocation = glGetUniformLocation(shader->GetProgramID(), "MAX_BLADES");
+
+
 			Vector3 camPos = gameWorld.GetMainCamera().GetPosition();
 			glUniform3fv(cameraLocation, 1, &camPos.x);
 
@@ -281,6 +294,14 @@ void GameTechRenderer::RenderCamera() {
 
 			int shadowTexLocation = glGetUniformLocation(shader->GetProgramID(), "shadowTex");
 			glUniform1i(shadowTexLocation, 1);
+
+
+			// Custom uniforms for grass tiles
+			if (TileXLenLocation >= 0 && TileZLenLocation >= 0 && MaxBladesLocation >= 0) {
+				glUniform1f(TileXLenLocation, *(*i).GetXLen());
+				glUniform1f(TileZLenLocation, *(*i).GetZLen());
+				glUniform1i(MaxBladesLocation, *(*i).GetMaxBlades());
+			}
 
 			activeShader = shader;
 		}
@@ -454,6 +475,10 @@ Texture* GameTechRenderer::LoadTexture(const std::string& name) {
 
 Shader* GameTechRenderer::LoadShader(const std::string& vertex, const std::string& fragment) {
 	return new OGLShader(vertex, fragment);
+}
+
+Shader* GameTechRenderer::LoadShader(const std::string& vertex, const std::string& fragment, const std::string& compute) {
+	return new OGLShader(vertex, fragment, "", "", "", compute);
 }
 
 void GameTechRenderer::SetDebugStringBufferSizes(size_t newVertCount) {

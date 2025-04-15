@@ -15,7 +15,7 @@ namespace NCL::Rendering {
 
 	class OGLShader : public Shader	{
 	public:
-		OGLShader(const std::string& vertex, const std::string& fragment, const std::string& geometry = "", const std::string& domain = "", const std::string& hull = "");
+		OGLShader(const std::string& vertex, const std::string& fragment, const std::string& geometry = "", const std::string& domain = "", const std::string& hull = "", const std::string& compute = "");
 		~OGLShader();
 
 		void ReloadShader() override;

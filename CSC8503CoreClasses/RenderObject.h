@@ -44,12 +44,36 @@ namespace NCL {
 				return colour;
 			}
 
+			float* GetXLen() const {
+				return xLen;
+			}
+
+			float* GetZLen() const {
+				return zLen;
+			}
+
+			int* GetMaxBlades() const {
+				return maxBlades;
+			}
+
+			void SetGrassTile(float* x, float* z, int* MaxBlades) {
+				xLen = x;
+				zLen = z;
+				maxBlades = MaxBlades;
+			}
+
+
 		protected:
 			Mesh*		mesh;
 			Texture*	texture;
 			Shader*		shader;
 			Transform*	transform;
 			Vector4		colour;
+
+			float* xLen = nullptr;
+			float* zLen = nullptr;
+			int* maxBlades = nullptr;
+
 		};
 	}
 }
