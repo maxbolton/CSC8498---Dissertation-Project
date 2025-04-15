@@ -55,7 +55,7 @@ void main(void)
 
 	if(MAX_BLADES > 0){
 	// set colour to red
-	albedo = vec4(1.0, 0.0, 0.0, 1.0);
+	albedo = vec4(0.35, 0.05, 0.01, 1.0);
 	fragColor += vec4(xLen * 0.0001, zLen * 0.0001, 0.0, 0.0);
 
 	// place black dots in each position using xLen and zLen

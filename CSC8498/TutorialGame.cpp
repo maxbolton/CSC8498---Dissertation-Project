@@ -97,24 +97,32 @@ void TutorialGame::InitWorld() {
 	GrassTile* grassTile = new GrassTile(Vector3(0, 2, 0));
 
 	grassTile->SetRenderObject(new RenderObject(&grassTile->GetTransform(), cubeMesh, basicTex, grassShader));
-	//grassTile->GetRenderObject()->SetColour(Vector4(Debug::GREEN));
 	grassTile->GetRenderObject()->SetGrassVals(grassTile->GetXLen(), grassTile->GetZLen(), grassTile->GetMaxBlades());
+	PlaceGrassBlades(grassTile);
 
-	for (GrassTile::GrassBlade blade : grassTile->GetBlades()) {
+	world->AddGameObject(grassTile);
+
+}
+
+void TutorialGame::PlaceGrassBlades(GrassTile* tile) {
+
+	for (GrassTile::GrassBlade blade : tile->GetBlades()) {
 		GameObject* bladeObj = new GameObject();
 		bladeObj->SetRenderObject(new RenderObject(&bladeObj->GetTransform(), grassBladeMesh, basicTex, basicShader));
 		bladeObj->GetRenderObject()->SetColour(Vector4(Debug::GREEN));
-		bladeObj->GetRenderObject()->SetGrassVals(grassTile->GetXLen(), grassTile->GetZLen(), grassTile->GetMaxBlades());
+		bladeObj->GetRenderObject()->SetGrassVals(tile->GetXLen(), tile->GetZLen(), tile->GetMaxBlades());
 		bladeObj->GetTransform().SetPosition(blade.position);
+
+		// apply rotation to blade
+		Quaternion rotation = Quaternion::EulerAnglesToQuaternion(blade.rotation.x, blade.rotation.y, blade.rotation.z);
+		bladeObj->GetTransform().SetOrientation(rotation);
+
+
 		bladeObj->GetTransform().SetScale(Vector3(0.1f, 0.1f, 0.1f));
 		bladeObj->SetPhysicsObject(new PhysicsObject(&bladeObj->GetTransform(), bladeObj->GetBoundingVolume()));
 		bladeObj->GetPhysicsObject()->SetInverseMass(0);
 		world->AddGameObject(bladeObj);
-
 	}
-
-	world->AddGameObject(grassTile);
-
 }
 
 /*
