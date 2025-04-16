@@ -111,11 +111,13 @@ void TutorialGame::PlaceGrassBlades(GrassTile* tile) {
 		GameObject* bladeObj = new GameObject();
 		bladeObj->SetRenderObject(new RenderObject(&bladeObj->GetTransform(), grassBladeMesh, basicTex, grassBladeShader));
 		bladeObj->GetRenderObject()->SetColour(Vector4(Debug::GREEN));
-		bladeObj->GetRenderObject()->SetGrassVals(tile->GetXLen(), tile->GetZLen(), tile->GetMaxBlades());
+		bladeObj->GetRenderObject()->SetBendAmount(&blade.bendAmount);
+
 		bladeObj->GetTransform().SetPosition(blade.position);
 
+
 		// apply rotation to blade
-		Quaternion rotation = Quaternion::EulerAnglesToQuaternion(blade.rotation.x, blade.rotation.y, blade.rotation.z);
+		Quaternion rotation = Quaternion::EulerAnglesToQuaternion(blade.faceRotation.x, blade.faceRotation.y, blade.faceRotation.z);
 		bladeObj->GetTransform().SetOrientation(rotation);
 
 

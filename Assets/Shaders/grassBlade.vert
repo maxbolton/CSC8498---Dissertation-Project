@@ -14,8 +14,10 @@ uniform vec4 		objectColour = vec4(1,1,1,1);
 
 uniform bool hasVertexColours = false;
 
-uniform float rand = -999;
-uniform float bendHeight = 1;
+uniform float bendAmount = -999;
+uniform float maxHeight = -1;
+uniform float bendHeightPercent = .6;
+
 
 out Vertex
 {
@@ -42,15 +44,30 @@ void main(void)
 		OUT.colour		= objectColour * colour;
 	}
 
-	if (rand == -999) {
+	if (bendAmount == -999 || maxHeight == -1) {
 		OUT.colour = vec4(1,0,0,1);
 	}
 
 	// Apply bending effect
 	vec3 bentPosition = position;
-	if (position.y > bendHeight) {
-		float bendFactor = (position.y - bendHeight) / (1.0 - bendHeight); // Normalize bend factor
-		bentPosition.x += sin((position.y - bendHeight) * 3.14159) * rand; // Adjust the axis and amount of bending as needed
+	if (position.y > (maxHeight * bendHeightPercent)) {
+		float bendStart = maxHeight * bendHeightPercent;
+		float heightFactor = clamp((position.y - bendStart) / (maxHeight - bendStart), 0.0, 1.0);
+    
+		float angle = bendAmount * heightFactor; // More bend the higher it is
+
+		// Rotate around the Z axis (for example)
+		mat3 rotation = mat3(
+			cos(angle), -sin(angle), 0.0,
+			sin(angle),  cos(angle), 0.0,
+			0.0,         0.0,        1.0
+		);
+
+		// Shift to pivot point, rotate, shift back
+		vec3 pivot = vec3(position.x, bendStart, position.z);
+		bentPosition -= pivot;
+		bentPosition = rotation * bentPosition;
+		bentPosition += pivot;
 	}
 
 	gl_Position		= mvp * vec4(bentPosition, 1.0);

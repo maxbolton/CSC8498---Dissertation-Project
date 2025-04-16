@@ -56,10 +56,29 @@ namespace NCL {
 				return maxBlades;
 			}
 
+			float* GetBendAmount() const {
+				return bendAmount;
+			}
+
 			void SetGrassVals(float* xLen, float* zLen, int* maxBlades) {
 				this->xLen = xLen;
 				this->zLen = zLen;
 				this->maxBlades = maxBlades;
+			}
+
+			float GetMaxHeight() const {
+				float maxHeight = std::numeric_limits<float>::lowest();
+				const auto& positions = mesh->GetPositionData();
+				for (const auto& pos : positions) {
+					if (pos.y > maxHeight) {
+						maxHeight = pos.y;
+					}
+				}
+				return maxHeight;
+			}
+
+			void SetBendAmount(float* bendAmount) {
+				this->bendAmount = bendAmount;
 			}
 
 		protected:
@@ -72,6 +91,7 @@ namespace NCL {
 			float* xLen = nullptr;
 			float* zLen = nullptr;
 			int* maxBlades = nullptr;
+			float* bendAmount = nullptr;
 
 
 		};

@@ -249,7 +249,8 @@ void GameTechRenderer::RenderCamera() {
 
 	int MaxBladesLocation = 0;
 
-	int randLocation = 0;
+	int bendAmountLocation = 0;
+	int maxHeightLocation = 0;
 
 	//TODO - PUT IN FUNCTION
 	glActiveTexture(GL_TEXTURE0 + 1);
@@ -285,7 +286,8 @@ void GameTechRenderer::RenderCamera() {
 
 			MaxBladesLocation = glGetUniformLocation(shader->GetProgramID(), "MAX_BLADES");
 
-			randLocation = glGetUniformLocation(shader->GetProgramID(), "rand");
+			bendAmountLocation = glGetUniformLocation(shader->GetProgramID(), "bendAmount");
+			maxHeightLocation = glGetUniformLocation(shader->GetProgramID(), "maxHeight");
 
 
 			Vector3 camPos = gameWorld.GetMainCamera().GetPosition();
@@ -309,13 +311,10 @@ void GameTechRenderer::RenderCamera() {
 				glUniform1i(MaxBladesLocation, *(*i).GetMaxBlades());
 			}
 
-			if (randLocation >= 0) {
-				std::default_random_engine gen;
-				std::uniform_real_distribution<float> randDis(-50, 50);
+			if (bendAmountLocation >= 0 && maxHeightLocation >= 0) {
 
-				gen.seed(std::random_device{}());
-
-				glUniform1f(randLocation, randDis(gen));
+				glUniform1f(bendAmountLocation, *(*i).GetBendAmount());
+				glUniform1f(maxHeightLocation, (*i).GetMaxHeight());
 			}
 
 			activeShader = shader;

@@ -11,7 +11,8 @@ namespace NCL {
 			struct GrassBlade {
 				int id;
 				Vector3 position;
-				Vector3 rotation;
+				Vector3 faceRotation;
+				float bendAmount;
 			};
 
 		private:
@@ -19,14 +20,14 @@ namespace NCL {
 			float xLen = 16.0f;
 			float yLen = 1.0f;
 			float zLen = 16.0f;
-			int maxBlades = 512;
+			int maxBlades = 10;
 
 			std::vector<GrassBlade> blades;
 
 			
 
 		public:
-			GrassTile(Vector3 pos) : posDis(-0.5f, 0.5f),  rotDis(-180.0f, 180.0f) {
+			GrassTile(Vector3 pos) : posDis(-0.5f, 0.5f),  rotDis(-180.0f, 180.0f), bendDis(-50.0f, 50.0f) {
 
 				AABBVolume* volume = new AABBVolume(Vector3(8, 0, 8));
 				this->SetBoundingVolume((CollisionVolume*)volume);
@@ -60,7 +61,7 @@ namespace NCL {
 				return &maxBlades;
 			}
 
-			std::vector<GrassBlade> GetBlades() {
+			std::vector<GrassBlade>& GetBlades() {
 				return blades;
 			}
 
@@ -82,8 +83,6 @@ namespace NCL {
 						blade.id = id++;
 						blade.position = Vector3((i * (xLen / bladesX)) - xLen*0.5, this->GetTransform().GetPosition().y+(yLen*0.5), (j * (zLen / bladesZ)) - zLen * 0.5);
 						
-					
-						
 						ApplyJitter(blade);
 						blades.push_back(blade);
 					}
@@ -94,6 +93,7 @@ namespace NCL {
 			std::default_random_engine gen;
 			std::uniform_real_distribution<float> posDis;
 			std::uniform_real_distribution<float> rotDis;
+			std::uniform_real_distribution<float> bendDis;
 
 			void ApplyJitter(GrassBlade& blade) {
 				gen.seed(std::random_device{}());
@@ -101,7 +101,8 @@ namespace NCL {
 				Vector3 posJitter = Vector3(posDis(gen), 0, posDis(gen));
 				blade.position += posJitter;
 
-				blade.rotation = Vector3(0, rotDis(gen), 0);
+				blade.faceRotation = Vector3(0, rotDis(gen), 0);
+				blade.bendAmount = bendDis(gen);
 			}
 		};
 
