@@ -36,7 +36,7 @@ void TutorialGame::InitialiseAssets() {
 	cubeMesh	= renderer->LoadMesh("cube.msh");
 	sphereMesh	= renderer->LoadMesh("sphere.msh");
 	capsuleMesh = renderer->LoadMesh("capsule.msh");
-	grassBladeMesh = renderer->LoadMesh("singleGrassBlade.msh");
+	grassBladeMesh = renderer->LoadMesh("grassBladeCustom.msh");
 
 	basicTex	= renderer->LoadTexture("checkerboard.png");
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag");
@@ -118,7 +118,7 @@ void TutorialGame::PlaceGrassBlades(GrassTile* tile) {
 		bladeObj->GetTransform().SetOrientation(rotation);
 
 
-		bladeObj->GetTransform().SetScale(Vector3(0.1f, 0.1f, 0.1f));
+		bladeObj->GetTransform().SetScale(Vector3(0.5f, 0.5f, 0.5f));
 		bladeObj->SetPhysicsObject(new PhysicsObject(&bladeObj->GetTransform(), bladeObj->GetBoundingVolume()));
 		bladeObj->GetPhysicsObject()->SetInverseMass(0);
 		world->AddGameObject(bladeObj);
