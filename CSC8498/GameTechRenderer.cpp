@@ -4,6 +4,8 @@
 #include "Camera.h"
 #include "TextureLoader.h"
 #include "MshLoader.h"
+#include <random>
+
 using namespace NCL;
 using namespace Rendering;
 using namespace CSC8503;
@@ -247,6 +249,8 @@ void GameTechRenderer::RenderCamera() {
 
 	int MaxBladesLocation = 0;
 
+	int randLocation = 0;
+
 	//TODO - PUT IN FUNCTION
 	glActiveTexture(GL_TEXTURE0 + 1);
 	glBindTexture(GL_TEXTURE_2D, shadowTex);
@@ -281,6 +285,8 @@ void GameTechRenderer::RenderCamera() {
 
 			MaxBladesLocation = glGetUniformLocation(shader->GetProgramID(), "MAX_BLADES");
 
+			randLocation = glGetUniformLocation(shader->GetProgramID(), "rand");
+
 
 			Vector3 camPos = gameWorld.GetMainCamera().GetPosition();
 			glUniform3fv(cameraLocation, 1, &camPos.x);
@@ -301,6 +307,15 @@ void GameTechRenderer::RenderCamera() {
 				glUniform1f(TileXLenLocation, *(*i).GetXLen());
 				glUniform1f(TileZLenLocation, *(*i).GetZLen());
 				glUniform1i(MaxBladesLocation, *(*i).GetMaxBlades());
+			}
+
+			if (randLocation >= 0) {
+				std::default_random_engine gen;
+				std::uniform_real_distribution<float> randDis(-50, 50);
+
+				gen.seed(std::random_device{}());
+
+				glUniform1f(randLocation, randDis(gen));
 			}
 
 			activeShader = shader;

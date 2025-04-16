@@ -19,7 +19,7 @@ namespace NCL {
 			float xLen = 16.0f;
 			float yLen = 1.0f;
 			float zLen = 16.0f;
-			int maxBlades = 256;
+			int maxBlades = 512;
 
 			std::vector<GrassBlade> blades;
 
@@ -98,7 +98,7 @@ namespace NCL {
 			void ApplyJitter(GrassBlade& blade) {
 				gen.seed(std::random_device{}());
 
-				Vector3 posJitter = Vector3(posDis(gen), posDis(gen), posDis(gen));
+				Vector3 posJitter = Vector3(posDis(gen), 0, posDis(gen));
 				blade.position += posJitter;
 
 				blade.rotation = Vector3(0, rotDis(gen), 0);

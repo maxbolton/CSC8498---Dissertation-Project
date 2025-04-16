@@ -49,6 +49,7 @@ namespace NCL {
 			Texture*	basicTex	= nullptr;
 			Shader*		basicShader = nullptr;
 			Shader*		grassShader = nullptr;
+			Shader*		grassBladeShader = nullptr;
 
 		};
 	}

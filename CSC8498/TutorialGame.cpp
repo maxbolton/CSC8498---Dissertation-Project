@@ -36,11 +36,12 @@ void TutorialGame::InitialiseAssets() {
 	cubeMesh	= renderer->LoadMesh("cube.msh");
 	sphereMesh	= renderer->LoadMesh("sphere.msh");
 	capsuleMesh = renderer->LoadMesh("capsule.msh");
-	grassBladeMesh = renderer->LoadMesh("grassBladeCustom.msh");
+	grassBladeMesh = renderer->LoadMesh("grassBladeCustomVerticies.msh");
 
 	basicTex	= renderer->LoadTexture("checkerboard.png");
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag");
 	grassShader = renderer->LoadShader("grassTile.vert", "grassTile.frag");
+	grassBladeShader = renderer->LoadShader("grassBlade.vert", "grassBlade.frag");
 
 	InitCamera();
 	InitWorld();
@@ -108,7 +109,7 @@ void TutorialGame::PlaceGrassBlades(GrassTile* tile) {
 
 	for (GrassTile::GrassBlade blade : tile->GetBlades()) {
 		GameObject* bladeObj = new GameObject();
-		bladeObj->SetRenderObject(new RenderObject(&bladeObj->GetTransform(), grassBladeMesh, basicTex, basicShader));
+		bladeObj->SetRenderObject(new RenderObject(&bladeObj->GetTransform(), grassBladeMesh, basicTex, grassBladeShader));
 		bladeObj->GetRenderObject()->SetColour(Vector4(Debug::GREEN));
 		bladeObj->GetRenderObject()->SetGrassVals(tile->GetXLen(), tile->GetZLen(), tile->GetMaxBlades());
 		bladeObj->GetTransform().SetPosition(blade.position);
@@ -118,7 +119,7 @@ void TutorialGame::PlaceGrassBlades(GrassTile* tile) {
 		bladeObj->GetTransform().SetOrientation(rotation);
 
 
-		bladeObj->GetTransform().SetScale(Vector3(0.5f, 0.5f, 0.5f));
+		bladeObj->GetTransform().SetScale(Vector3(1.0f, 1.0f, 1.0f));
 		bladeObj->SetPhysicsObject(new PhysicsObject(&bladeObj->GetTransform(), bladeObj->GetBoundingVolume()));
 		bladeObj->GetPhysicsObject()->SetInverseMass(0);
 		world->AddGameObject(bladeObj);
