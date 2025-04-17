@@ -107,7 +107,7 @@ void TutorialGame::InitWorld() {
 
 void TutorialGame::PlaceGrassBlades(GrassTile* tile) {
 
-	for (GrassTile::GrassBlade blade : tile->GetBlades()) {
+	for (GrassTile::GrassBlade& blade : tile->GetBlades()) {
 		GameObject* bladeObj = new GameObject();
 		bladeObj->SetRenderObject(new RenderObject(&bladeObj->GetTransform(), grassBladeMesh, basicTex, grassBladeShader));
 		bladeObj->GetRenderObject()->SetColour(Vector4(Debug::GREEN));

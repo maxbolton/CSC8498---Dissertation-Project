@@ -68,6 +68,7 @@ void main(void)
 		bentPosition -= pivot;
 		bentPosition = rotation * bentPosition;
 		bentPosition += pivot;
+
 	}
 
 	gl_Position		= mvp * vec4(bentPosition, 1.0);
