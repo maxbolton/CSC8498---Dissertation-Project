@@ -36,7 +36,7 @@ void TutorialGame::InitialiseAssets() {
 	cubeMesh	= renderer->LoadMesh("cube.msh");
 	sphereMesh	= renderer->LoadMesh("sphere.msh");
 	capsuleMesh = renderer->LoadMesh("capsule.msh");
-	grassBladeMesh = renderer->LoadMesh("grassBladeCustomVerticies.msh");
+	grassBladeMesh = renderer->LoadMesh("grassBladeCustomSingle.msh");
 
 	basicTex	= renderer->LoadTexture("checkerboard.png");
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag");

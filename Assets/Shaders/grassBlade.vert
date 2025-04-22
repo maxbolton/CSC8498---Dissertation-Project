@@ -28,8 +28,23 @@ out Vertex
 	vec3 worldPos;
 } OUT;
 
+bool isBackFace(){ return dot(normal, vec3(0, 0, 1)) < 0.0; }
+
+vec3 BendBladeVertex(vec3 pos, float bendAmount, float maxHeight) {
+    // How far up the blade this vertex is
+    float heightFactor = clamp(pos.y / maxHeight, 0.0, 1.0);
+
+    // Compute a smooth parabolic bend amount based only on height
+    float zBend = bendAmount * heightFactor * heightFactor;
+
+    // Output position: same X and Y, new Z
+    return vec3(pos.x, pos.y, zBend);
+}
+
+
 void main(void)
 {
+
 	mat4 mvp 		  = (projMatrix * viewMatrix * modelMatrix);
 	mat3 normalMatrix = transpose ( inverse ( mat3 ( modelMatrix )));
 
@@ -43,33 +58,29 @@ void main(void)
 	if(hasVertexColours) {
 		OUT.colour		= objectColour * colour;
 	}
-
-	if (bendAmount == -999 || maxHeight == -1) {
-		OUT.colour = vec4(1,0,0,1);
-	}
-
-	// Apply bending effect
+	
 	vec3 bentPosition = position;
-	if (position.y > (maxHeight * bendHeightPercent)) {
-		float bendStart = maxHeight * bendHeightPercent;
-		float heightFactor = clamp((position.y - bendStart) / (maxHeight - bendStart), 0.0, 1.0);
-    
-		float angle = bendAmount * heightFactor; // More bend the higher it is
 
-		// Rotate around the Z axis (for example)
-		mat3 rotation = mat3(
-			cos(angle), -sin(angle), 0.0,
-			sin(angle),  cos(angle), 0.0,
-			0.0,         0.0,        1.0
-		);
+	if (bendAmount != -999.0 && maxHeight != -1.0) {
+		bentPosition = BendBladeVertex(position, bendAmount, maxHeight);
 
-		// Shift to pivot point, rotate, shift back
-		vec3 pivot = vec3(position.x, bendStart, position.z);
-		bentPosition -= pivot;
-		bentPosition = rotation * bentPosition;
-		bentPosition += pivot;
+		float h = clamp(position.y/maxHeight, 0.0, 1.0);
+		// dz/dy = 2 * bendAmount * h / maxHeight
+		float slope = 2.0 * bendAmount * h / maxHeight;
+		vec3 bentNormal = normalize(vec3(0.0, -slope, 1.0));
+
+		OUT.normal = normalize(normalMatrix * bentNormal);
+
+		vec4 worldPos4 = modelMatrix * vec4(bentPosition, 1.0);
+		OUT.worldPos   = worldPos4.xyz;
+		OUT.shadowProj = shadowMatrix * vec4(bentPosition, 1.0);
+		gl_Position    = projMatrix * viewMatrix * worldPos4;
+
 
 	}
+	else {
+		OUT.colour = vec4(1,0,0,1);
+		gl_Position = mvp * vec4(position, 1.0);
+	}
 
-	gl_Position		= mvp * vec4(bentPosition, 1.0);
 }

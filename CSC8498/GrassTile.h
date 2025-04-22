@@ -20,14 +20,14 @@ namespace NCL {
 			float xLen = 16.0f;
 			float yLen = 1.0f;
 			float zLen = 16.0f;
-			int maxBlades = 10;
+			int maxBlades = 256;
 
 			std::vector<GrassBlade> blades;
 
 			
 
 		public:
-			GrassTile(Vector3 pos) : posDis(-0.5f, 0.5f),  rotDis(-180.0f, 180.0f), bendDis(-50.0f, 50.0f) {
+			GrassTile(Vector3 pos) : posDis(-0.5f, 0.5f),  rotDis(-180.0f, 180.0f), bendDis(-5.0f, 5.0f) {
 
 				AABBVolume* volume = new AABBVolume(Vector3(8, 0, 8));
 				this->SetBoundingVolume((CollisionVolume*)volume);
