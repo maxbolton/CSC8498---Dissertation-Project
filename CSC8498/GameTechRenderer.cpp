@@ -5,6 +5,7 @@
 #include "TextureLoader.h"
 #include "MshLoader.h"
 #include <random>
+#include "../CSC8498/GrassTile.h"
 
 using namespace NCL;
 using namespace Rendering;
@@ -252,6 +253,7 @@ void GameTechRenderer::RenderCamera() {
 
 	int bendAmountLocation = 0;
 	int maxHeightLocation = 0;
+	int noiseAmountLocation = 0;
 
 	//TODO - PUT IN FUNCTION
 	glActiveTexture(GL_TEXTURE0 + 1);
@@ -289,6 +291,7 @@ void GameTechRenderer::RenderCamera() {
 
 			bendAmountLocation = glGetUniformLocation(shader->GetProgramID(), "bendAmount");
 			maxHeightLocation = glGetUniformLocation(shader->GetProgramID(), "maxHeight");
+			noiseAmountLocation = glGetUniformLocation(shader->GetProgramID(), "noiseAmount");
 
 
 			Vector3 camPos = gameWorld.GetMainCamera().GetPosition();
@@ -329,9 +332,10 @@ void GameTechRenderer::RenderCamera() {
 		glUniform1i(hasTexLocation, (OGLTexture*)(*i).GetDefaultTexture() ? 1:0);
 
 
-		if (bendAmountLocation >= 0 && maxHeightLocation >= 0) {
+		if (bendAmountLocation >= 0 && maxHeightLocation >= 0 && noiseAmountLocation >= 0) {
 			glUniform1f(bendAmountLocation, *(*i).GetBendAmount());
 			glUniform1f(maxHeightLocation, (*i).GetMaxHeight());
+			glUniform1f(noiseAmountLocation, (*i).GetGrassBlade()->noiseValue);
 		}
 
 		BindMesh((OGLMesh&)*(*i).GetMesh());

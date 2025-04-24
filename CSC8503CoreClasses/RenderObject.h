@@ -8,6 +8,8 @@ namespace NCL {
 
 	namespace CSC8503 {
 		class Transform;
+		class GrassTile;
+		struct GrassBlade;
 		using namespace Maths;
 
 		class RenderObject
@@ -81,6 +83,14 @@ namespace NCL {
 				this->bendAmount = bendAmount;
 			}
 
+			void SetGrassBlade(GrassBlade* blade) {
+				this->blade = blade;
+			}
+
+			GrassBlade* GetGrassBlade() const {
+				return blade;
+			}
+
 		protected:
 			Mesh*		mesh;
 			Texture*	texture;
@@ -91,8 +101,9 @@ namespace NCL {
 			float* xLen = nullptr;
 			float* zLen = nullptr;
 			int* maxBlades = nullptr;
-			float* bendAmount = nullptr;
 
+			float* bendAmount = nullptr;
+			GrassBlade* blade = nullptr;
 
 		};
 	}

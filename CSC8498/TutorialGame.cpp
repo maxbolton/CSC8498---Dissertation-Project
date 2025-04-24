@@ -71,7 +71,7 @@ void TutorialGame::UpdateGame(float dt) {
 	//This year we can draw debug textures as well!
 	//Debug::DrawTex(*basicTex, Vector2(10, 10), Vector2(5, 5), Debug::MAGENTA);
 
-	Debug::Print("Test", Vector2(5, 95), Debug::RED);
+	//Debug::Print("Test", Vector2(5, 95), Debug::RED);
 	world->UpdateWorld(dt);
 	renderer->Update(dt);
 	physics->Update(dt);
@@ -114,11 +114,12 @@ void TutorialGame::InitWorld() {
 
 void TutorialGame::PlaceGrassBlades(GrassTile* tile) {
 
-	for (GrassTile::GrassBlade& blade : tile->GetBlades()) {
+	for (GrassBlade& blade : tile->GetBlades()) {
 		GameObject* bladeObj = new GameObject();
 		bladeObj->SetRenderObject(new RenderObject(&bladeObj->GetTransform(), grassBladeMesh, basicTex, grassBladeShader));
 		bladeObj->GetRenderObject()->SetColour(Vector4(Debug::GREEN));
 		bladeObj->GetRenderObject()->SetBendAmount(&blade.bendAmount);
+		bladeObj->GetRenderObject()->SetGrassBlade(&blade);
 
 		bladeObj->GetTransform().SetPosition(blade.position);
 

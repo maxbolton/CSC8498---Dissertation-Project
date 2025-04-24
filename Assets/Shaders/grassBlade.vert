@@ -17,6 +17,7 @@ uniform bool hasVertexColours = false;
 uniform float bendAmount = -999;
 uniform float maxHeight = -1;
 uniform float bendHeightPercent = .6;
+uniform float noiseAmount = -999;
 
 
 out Vertex
@@ -76,6 +77,8 @@ void main(void)
 		OUT.shadowProj = shadowMatrix * vec4(bentPosition, 1.0);
 		gl_Position    = projMatrix * viewMatrix * worldPos4;
 
+		
+		OUT.colour.x = noiseAmount;
 
 	}
 	else {
