@@ -26,7 +26,23 @@ namespace NCL::Rendering {
 
 		virtual void Update(float dt) {}
 
+		using clock = std::chrono::high_resolution_clock;
+		std::chrono::steady_clock::time_point previousTime;
+
 		void Render() {
+
+			auto currentTime = clock::now();
+			std::chrono::duration<float> elapsedTime = currentTime - previousTime;
+			previousTime = currentTime;
+
+			frametime = elapsedTime.count();
+			framerate = 1.0f / frametime;
+
+			//std::cout << "FPS: " << framerate << std::endl;
+			//std::cout << "Frame time: " << frametime * 1000.0f << "ms" << std::endl;
+
+
+
 			//assert(HasInitialised());
 			BeginFrame();
 			RenderFrame();
@@ -46,9 +62,15 @@ namespace NCL::Rendering {
 		virtual void OnWindowResize(int w, int h) = 0;
 		virtual void OnWindowDetach() {}; //Most renderers won't care about this
 
+		float GetFrameTime() const { return frametime; }
+		float GetFrameRate() const { return framerate; }
+
 	protected:	
 		Window& hostWindow;
 
 		Vector2i windowSize;
+
+		float frametime;
+		float framerate;
 	};
 }

@@ -71,12 +71,18 @@ void TutorialGame::UpdateGame(float dt) {
 	//This year we can draw debug textures as well!
 	//Debug::DrawTex(*basicTex, Vector2(10, 10), Vector2(5, 5), Debug::MAGENTA);
 
+	Debug::Print("Test", Vector2(5, 95), Debug::RED);
 	world->UpdateWorld(dt);
 	renderer->Update(dt);
 	physics->Update(dt);
 
+	//Debug::Print("FPS: " + std::to_string(renderer->GetFrameRate()), Vector2(10, 10), Debug::WHITE);
+	//Debug::Print("Frame Time: " + std::to_string(renderer->GetFrameTime()), Vector2(10, 30), Debug::WHITE);
+	
+
 	renderer->Render();
 	Debug::UpdateRenderables(dt);
+
 }
 
 void TutorialGame::InitCamera() {
@@ -88,6 +94,7 @@ void TutorialGame::InitCamera() {
 }
 
 void TutorialGame::InitWorld() {
+	renderer->SetVerticalSync(VerticalSyncState::VSync_OFF);
 	world->ClearAndErase();
 	physics->Clear();
 
