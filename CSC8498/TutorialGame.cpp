@@ -84,7 +84,7 @@ void TutorialGame::InitCamera() {
 	world->GetMainCamera().SetFarPlane(500.0f);
 	world->GetMainCamera().SetPitch(-15.0f);
 	world->GetMainCamera().SetYaw(315.0f);
-	world->GetMainCamera().SetPosition(Vector3(-60, 40, 60));
+	world->GetMainCamera().SetPosition(Vector3(-15, 10, 15));
 }
 
 void TutorialGame::InitWorld() {

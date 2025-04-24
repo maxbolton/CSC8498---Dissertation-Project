@@ -27,7 +27,7 @@ namespace NCL {
 			
 
 		public:
-			GrassTile(Vector3 pos) : posDis(-0.5f, 0.5f),  rotDis(-180.0f, 180.0f), bendDis(-5.0f, 5.0f) {
+			GrassTile(Vector3 pos) : posDis(-0.5f, 0.5f),  rotDis(-180.0f, 180.0f), bendDis(-2.5f, 2.5f) {
 
 				AABBVolume* volume = new AABBVolume(Vector3(8, 0, 8));
 				this->SetBoundingVolume((CollisionVolume*)volume);
