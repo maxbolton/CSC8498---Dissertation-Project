@@ -10,11 +10,15 @@ using namespace CSC8503;
 
 float dt;
 
+extern "C" {
+	_declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+}
+
 int main()
 {
 	std::cout << "Hello World!" << std::endl;
 
-	
+
 	// Create a window
 	WindowInitialisation initInfo;
 	initInfo.width = 1280;

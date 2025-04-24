@@ -27,8 +27,10 @@ namespace NCL {
 			
 
 		public:
-			GrassTile(Vector3 pos) : posDis(-0.5f, 0.5f),  rotDis(-180.0f, 180.0f), bendDis(-2.5f, 2.5f) {
+			GrassTile(Vector3 pos) : gen(std::random_device{}()), posDis(-0.5f, 0.5f),  rotDis(-180.0f, 180.0f), bendDis(-2.0f, 2.0f) {
 
+
+				
 				AABBVolume* volume = new AABBVolume(Vector3(8, 0, 8));
 				this->SetBoundingVolume((CollisionVolume*)volume);
 				this->GetTransform()
@@ -91,18 +93,18 @@ namespace NCL {
 
 
 			std::default_random_engine gen;
-			std::uniform_real_distribution<float> posDis;
-			std::uniform_real_distribution<float> rotDis;
-			std::uniform_real_distribution<float> bendDis;
+			std::uniform_real_distribution<float> posDis, rotDis, bendDis;
 
 			void ApplyJitter(GrassBlade& blade) {
-				gen.seed(std::random_device{}());
 
 				Vector3 posJitter = Vector3(posDis(gen), 0, posDis(gen));
 				blade.position += posJitter;
 
 				blade.faceRotation = Vector3(0, rotDis(gen), 0);
-				blade.bendAmount = bendDis(gen);
+
+				float bend = bendDis(gen);
+				//std::cout << "Bend: " << bend << std::endl;
+				blade.bendAmount = bend;
 			}
 		};
 

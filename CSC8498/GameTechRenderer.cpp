@@ -312,12 +312,6 @@ void GameTechRenderer::RenderCamera() {
 				glUniform1i(MaxBladesLocation, *(*i).GetMaxBlades());
 			}
 
-			if (bendAmountLocation >= 0 && maxHeightLocation >= 0) {
-
-				glUniform1f(bendAmountLocation, *(*i).GetBendAmount());
-				glUniform1f(maxHeightLocation, (*i).GetMaxHeight());
-			}
-
 			activeShader = shader;
 		}
 
@@ -333,6 +327,12 @@ void GameTechRenderer::RenderCamera() {
 		glUniform1i(hasVColLocation, !(*i).GetMesh()->GetColourData().empty());
 
 		glUniform1i(hasTexLocation, (OGLTexture*)(*i).GetDefaultTexture() ? 1:0);
+
+
+		if (bendAmountLocation >= 0 && maxHeightLocation >= 0) {
+			glUniform1f(bendAmountLocation, *(*i).GetBendAmount());
+			glUniform1f(maxHeightLocation, (*i).GetMaxHeight());
+		}
 
 		BindMesh((OGLMesh&)*(*i).GetMesh());
 		size_t layerCount = (*i).GetMesh()->GetSubMeshCount();
