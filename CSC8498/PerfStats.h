@@ -3,6 +3,7 @@
 #include <iostream>
 #include <chrono>
 #include "GameTechRenderer.h"
+#include <ctime>
 
 
 namespace NCL {
@@ -23,6 +24,7 @@ namespace NCL {
 
 			GameTechRenderer* renderer = nullptr;
 
+			std::ofstream file;
 
 
 		public:
@@ -35,11 +37,17 @@ namespace NCL {
 				renderer->ResetCounters();
 				droppedFrames120 = 0.0f;
 				droppedFrames60 = 0.0f;
+
+				OpenFile();
+				
 			}
 
 			~PerfStats() {
 				delete framerate;
 				delete frametime;
+				delete totalFrames;
+
+				file.close();
 			}
 
 			void PrintStats() {
@@ -54,6 +62,8 @@ namespace NCL {
 				std::cout << "Total frames: " << *totalFrames << std::endl;
 				std::cout << "Dropped frames@60hz: " << droppedFrames60 << std::endl;
 				std::cout << "Dropped frames@120hz: " << droppedFrames120 << std::endl;
+
+				WriteToFile();
 			}
 
 			void CalcDroppedFrames() {
@@ -71,6 +81,33 @@ namespace NCL {
 				}
 			}
 
+			void WriteToFile() {
+				file << *frametime << "," << *framerate << "," << droppedFrames60 << "," << droppedFrames120 << std::endl;
+				file.flush();
+			}
+
+			void OpenFile() {
+				std::string date = std::to_string(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+				std::string time = std::to_string(std::chrono::system_clock::now().time_since_epoch().count());
+				std::string filename = "PerfStats_" + GetDateTime() + ".csv";
+				std::string directory = "../../Documents/";
+
+				file.open(directory + filename, std::ios::app);
+
+				// Headers for frametime, framerate, and dropped frames
+				file << "FrameTime,FrameRate,DroppedFrames60,DroppedFrames120" << std::endl;
+			}
+
+			std::string GetDateTime() {
+				auto now = std::chrono::system_clock::now();
+				std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+
+				std::tm now_tm = *std::localtime(&now_time);
+
+				std::ostringstream oss;
+				oss << std::put_time(&now_tm, "%d-%m~%H-%M-%S");
+				return oss.str();
+			}
 
 		};
 	}
