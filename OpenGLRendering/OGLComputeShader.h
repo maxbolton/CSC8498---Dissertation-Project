@@ -7,13 +7,14 @@ License: MIT (see LICENSE file at the top of the source tree)
 */////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "glad\gl.h"
+#include "Shader.h"
 
 namespace NCL::Rendering {
 
 	using UniqueOGLComputeShader = std::unique_ptr<class OGLComputeShader>;
 	using SharedOGLComputeShader = std::shared_ptr<class OGLComputeShader>;
 
-	class OGLComputeShader	{
+	class OGLComputeShader : public Shader {
 	public:
 		OGLComputeShader(const std::string& s);
 		~OGLComputeShader();
@@ -31,6 +32,15 @@ namespace NCL::Rendering {
 
 		Maths::Vector3i GetThreadGroupSize() const {
 			return threadsInGroup;
+		}
+
+		void ReloadShader() override {
+			glDeleteProgram(programID);
+			glDeleteShader(shaderID);
+			programID = 0;
+			shaderID = 0;
+			programValid = 0;
+			*this = OGLComputeShader(shaderFiles[0]);
 		}
 
 	protected:

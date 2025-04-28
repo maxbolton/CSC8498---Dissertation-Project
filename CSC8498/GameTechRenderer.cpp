@@ -6,6 +6,7 @@
 #include "MshLoader.h"
 #include <random>
 #include "../CSC8498/GrassTile.h"
+#include "../OpenGLRendering/OGLComputeShader.h"
 
 using namespace NCL;
 using namespace Rendering;
@@ -40,6 +41,12 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	glClearColor(1, 1, 1, 1);
+
+	// init grass ssbo
+	glGenBuffers(1, &grassBladeSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, grassBladeSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GrassBlade) * 512, nullptr, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 	//Set up the light properties
 	lightColour = Vector4(0.8f, 0.8f, 0.5f, 1.0f);
@@ -129,6 +136,7 @@ void GameTechRenderer::RenderFrame() {
 	SortObjectList();
 	RenderShadowMap();
 	RenderSkybox();
+	RenderGrassBlades();
 	RenderCamera();
 	glDisable(GL_CULL_FACE); //Todo - text indices are going the wrong way...
 	glDisable(GL_BLEND);
@@ -345,6 +353,27 @@ void GameTechRenderer::RenderCamera() {
 		}
 	}
 	glEnable(GL_CULL_FACE);
+}
+
+void GameTechRenderer::RenderGrassBlades() {
+	OGLShader* grassBladeShader = new OGLShader("grassblade.vert", "grassblade.frag");
+	UseShader(*grassBladeShader);
+
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, grassBladeSSBO);
+
+	Matrix4 viewMatrix = gameWorld.GetMainCamera().BuildViewMatrix();
+	Matrix4 projMatrix = gameWorld.GetMainCamera().BuildProjectionMatrix(hostWindow.GetScreenAspect());
+
+	glUniformMatrix4fv(glGetUniformLocation(grassBladeShader->GetProgramID(), "viewMatrix"), 1, false, (float*)&viewMatrix);
+	glUniformMatrix4fv(glGetUniformLocation(grassBladeShader->GetProgramID(), "projMatrix"), 1, false, (float*)&projMatrix);
+
+	glBindVertexArray(grassBladeMesh->GetVAO());
+
+	glDrawArraysInstanced(GL_TRIANGLES, 0, grassBladeMesh->GetVertexCount(), maxBlades);
+
+	glBindVertexArray(0);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
+	delete grassBladeShader;
 }
 
 Mesh* GameTechRenderer::LoadMesh(const std::string& name) {

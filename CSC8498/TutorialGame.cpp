@@ -72,21 +72,17 @@ void TutorialGame::UpdateGame(float dt) {
 	//This year we can draw debug textures as well!
 	//Debug::DrawTex(*basicTex, Vector2(10, 10), Vector2(5, 5), Debug::MAGENTA);
 
-	//Debug::Print("Test", Vector2(5, 95), Debug::RED);
 	world->UpdateWorld(dt);
-	renderer->Update(dt);
+	//renderer->Update(dt);
 	physics->Update(dt);
 
-	grassTile->UpdateBlades(dt);
-
-	//Debug::Print("FPS: " + std::to_string(renderer->GetFrameRate()), Vector2(10, 10), Debug::WHITE);
-	//Debug::Print("Frame Time: " + std::to_string(renderer->GetFrameTime()), Vector2(10, 30), Debug::WHITE);
-	
+	//grassTile->UpdateBlades(dt);
+	grassTile->DispatchComputeShader(dt);
 
 	renderer->Render();
 	Debug::UpdateRenderables(dt);
 
-	perfStats->PrintStats();
+	perfStats->UpdateStats();
 
 }
 
@@ -105,15 +101,13 @@ void TutorialGame::InitWorld() {
 	world->ClearAndErase();
 	physics->Clear();
 
-	//InitMixedGridWorld(15, 15, 3.5f, 3.5f);
-	//InitGameExamples();
 	InitDefaultFloor();
 
-	grassTile = new GrassTile(Vector3(0, 2, 0));
+	grassTile = new GrassTile(Vector3(0, 2, 0), true);
 
 	grassTile->SetRenderObject(new RenderObject(&grassTile->GetTransform(), cubeMesh, basicTex, grassShader));
 	grassTile->GetRenderObject()->SetGrassVals(grassTile->GetXLen(), grassTile->GetZLen(), grassTile->GetMaxBlades());
-	PlaceGrassBlades(grassTile);
+	//PlaceGrassBlades(grassTile);
 
 	world->AddGameObject(grassTile);
 

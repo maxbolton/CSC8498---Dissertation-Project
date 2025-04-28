@@ -1,0 +1,63 @@
+#version 450
+
+layout(local_size_x = 256) in; // Workgroup size
+
+struct GrassBlade{
+	int id;
+	vec3 position;
+	vec3 faceRotation;
+	float bendAmount;
+	float noiseValue;
+};
+
+layout(std430, binding = 0) buffer GrassBladeBuffer {
+	GrassBlade blades[];
+};
+
+uniform vec3 tilePos;
+uniform float xLen;
+uniform float zLen;
+uniform int maxBlades;
+uniform float time;
+
+void main(){
+	
+	// Get the index of the current work item
+	uint id = gl_GlobalInvocationID.x;
+	// Check if the index is within the bounds of the blades array
+	if (id >= maxBlades) return;
+
+	float area = xLen * zLen;
+	float density = maxBlades / area;
+
+	int bladesX = int(sqrt(density * xLen * zLen));
+	int bladesZ = maxBlades / bladesX;
+
+	int i = int(id) / bladesZ;
+	int j = int(id) % bladesZ;
+
+	// initial position derived from id in grid
+	vec3 pos = vec3(
+		i * (xLen / float(bladesX)) - xLen * 0.5,
+		0.0,
+		(j * (zLen / float(bladesZ)) - zLen * 0.5)
+	);
+
+	//apply jitter
+	pos += vec3(
+		fract(sin(dot(vec2(i, j), vec2(12.9898, 78.233))) * 43758.5453) * 0.1,
+		0.0,
+		fract(sin(dot(vec2(i, j), vec2(12.9898, 78.233))) * 43758.5453) * 0.1
+	);
+
+	vec3 rotation = vec3(0.0, fract(sin(float(id) * 0.1) * 43758.5453) * 360.0, 0.0);
+	float bend = fract(sin(float(id) * 0.2) * 43758.5453) * 2.0 - 1.0;
+	float noise = sin(pos.x + time) * 2.0;
+
+	blades[id].id = int(id);
+	blades[id].position = tilePos + pos;
+	blades[id].faceRotation = rotation;
+	blades[id].bendAmount = bend;
+	blades[id].noiseValue = noise;
+
+}

@@ -1,4 +1,16 @@
-#version 400 core
+#version 450 core
+
+struct GrassBlade {
+		int id;
+		vec3 position;
+		vec3 faceRotation;
+		float bendAmount;
+		float noiseValue;
+	};
+
+layout(std430, binding = 0) buffer GrassBladeBuffer {
+	GrassBlade blades[];
+};
 
 uniform mat4 modelMatrix 	= mat4(1.0f);
 uniform mat4 viewMatrix 	= mat4(1.0f);

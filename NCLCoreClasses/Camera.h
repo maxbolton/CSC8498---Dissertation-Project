@@ -24,7 +24,7 @@ namespace NCL {
 
 			nearPlane	= 1.0f;
 			farPlane	= 1000.0f;
-			speed		= 7.0f;
+			speed		= 0.25f;
 		};
 
 		Camera(float pitch, float yaw, const Vector3& position) : Camera() {

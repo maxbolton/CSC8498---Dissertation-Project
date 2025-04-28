@@ -35,6 +35,7 @@ namespace NCL {
 			void RenderShadowMap();
 			void RenderCamera(); 
 			void RenderSkybox();
+			void RenderGrassBlades();
 
 			void LoadSkybox();
 
@@ -75,6 +76,9 @@ namespace NCL {
 			GLuint textColourVBO;
 			GLuint textTexVBO;
 			size_t textCount;
+
+			//Grass
+			GLuint grassBladeSSBO;
 		};
 	}
 }
