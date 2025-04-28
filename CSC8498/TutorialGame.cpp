@@ -76,6 +76,8 @@ void TutorialGame::UpdateGame(float dt) {
 	renderer->Update(dt);
 	physics->Update(dt);
 
+	grassTile->UpdateBlades(dt);
+
 	//Debug::Print("FPS: " + std::to_string(renderer->GetFrameRate()), Vector2(10, 10), Debug::WHITE);
 	//Debug::Print("Frame Time: " + std::to_string(renderer->GetFrameTime()), Vector2(10, 30), Debug::WHITE);
 	
@@ -102,7 +104,7 @@ void TutorialGame::InitWorld() {
 	//InitGameExamples();
 	InitDefaultFloor();
 
-	GrassTile* grassTile = new GrassTile(Vector3(0, 2, 0));
+	grassTile = new GrassTile(Vector3(0, 2, 0));
 
 	grassTile->SetRenderObject(new RenderObject(&grassTile->GetTransform(), cubeMesh, basicTex, grassShader));
 	grassTile->GetRenderObject()->SetGrassVals(grassTile->GetXLen(), grassTile->GetZLen(), grassTile->GetMaxBlades());
@@ -118,8 +120,7 @@ void TutorialGame::PlaceGrassBlades(GrassTile* tile) {
 		GameObject* bladeObj = new GameObject();
 		bladeObj->SetRenderObject(new RenderObject(&bladeObj->GetTransform(), grassBladeMesh, basicTex, grassBladeShader));
 		bladeObj->GetRenderObject()->SetColour(Vector4(Debug::GREEN));
-		bladeObj->GetRenderObject()->SetBendAmount(&blade.bendAmount);
-		bladeObj->GetRenderObject()->SetGrassBlade(&blade);
+		bladeObj->GetRenderObject()->SetGrassBlade(&blade); // grass blade contains uniform data
 
 		bladeObj->GetTransform().SetPosition(blade.position);
 

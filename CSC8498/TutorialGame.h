@@ -51,6 +51,7 @@ namespace NCL {
 			Shader*		grassShader = nullptr;
 			Shader*		grassBladeShader = nullptr;
 
+			GrassTile* grassTile = nullptr;
 		};
 	}
 }

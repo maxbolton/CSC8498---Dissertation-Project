@@ -333,7 +333,7 @@ void GameTechRenderer::RenderCamera() {
 
 
 		if (bendAmountLocation >= 0 && maxHeightLocation >= 0 && noiseAmountLocation >= 0) {
-			glUniform1f(bendAmountLocation, *(*i).GetBendAmount());
+			glUniform1f(bendAmountLocation, (*i).GetGrassBlade()->bendAmount);
 			glUniform1f(maxHeightLocation, (*i).GetMaxHeight());
 			glUniform1f(noiseAmountLocation, (*i).GetGrassBlade()->noiseValue);
 		}

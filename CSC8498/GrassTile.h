@@ -2,6 +2,8 @@
 #include "GameObject.h"
 #include <random>
 #include "../FastNoiseLite/Cpp/FastNoiseLite.h"
+#include "Window.h"
+#include "GameTimer.h"
 
 namespace NCL {
 	namespace CSC8503 {
@@ -16,24 +18,22 @@ namespace NCL {
 
 		class GrassTile : public GameObject {
 			
-		public:
-			
-
 		private:
 			
 			float xLen = 16.0f;
 			float yLen = 1.0f;
 			float zLen = 16.0f;
-			int maxBlades = 256;
+			int maxBlades = 512;
 
 			std::vector<GrassBlade> blades;
 
-			
+			FastNoiseLite noise;
 
 		public:
 			GrassTile(Vector3 pos) : gen(std::random_device{}()), posDis(-0.5f, 0.5f),  rotDis(-180.0f, 180.0f), bendDis(-2.0f, 2.0f) {
 
-
+				noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+				noise.SetFrequency(0.1f);
 				
 				AABBVolume* volume = new AABBVolume(Vector3(8, 0, 8));
 				this->SetBoundingVolume((CollisionVolume*)volume);
@@ -80,11 +80,6 @@ namespace NCL {
 				int bladesX = static_cast<int>(std::sqrt(density * xLen * zLen));
 				int bladesZ = maxBlades / bladesX;
 
-				FastNoiseLite noise;
-				noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
-				noise.SetFrequency(0.1f);
-
-
 				for (int i = 0; i < bladesX; ++i) {
 					for (int j = 0; j < bladesZ; ++j) {
 						if (id >= maxBlades) return;
@@ -113,8 +108,14 @@ namespace NCL {
 				blade.faceRotation = Vector3(0, rotDis(gen), 0);
 
 				float bend = bendDis(gen);
-				//std::cout << "Bend: " << bend << std::endl;
 				blade.bendAmount = bend;
+			}
+
+			void UpdateBlades(float dt) {
+				for (GrassBlade& blade : blades) {
+					//std::cout << "Timer: " << dt << std::endl;
+					blade.noiseValue = noise.GetNoise(blade.position.x + dt * 5.0f, blade.position.z) * 2.0f;
+				}
 			}
 		};
 

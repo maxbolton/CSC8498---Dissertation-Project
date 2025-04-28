@@ -45,7 +45,7 @@ int main()
 
 
 	while (window->UpdateWindow() && !Window::GetKeyboard()->KeyPressed(KeyCodes::ESCAPE)) {
-		dt = window->GetTimer().GetTimeDeltaSeconds();
+		dt += window->GetTimer().GetTimeDeltaSeconds();
 		game->UpdateGame(dt);
 	}
 
