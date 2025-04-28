@@ -38,9 +38,7 @@ namespace NCL::Rendering {
 			frametime = elapsedTime.count();
 			framerate = 1.0f / frametime;
 
-			//std::cout << "FPS: " << framerate << std::endl;
-			//std::cout << "Frame time: " << frametime * 1000.0f << "ms" << std::endl;
-
+			totalFrames++;
 
 
 			//assert(HasInitialised());
@@ -62,8 +60,14 @@ namespace NCL::Rendering {
 		virtual void OnWindowResize(int w, int h) = 0;
 		virtual void OnWindowDetach() {}; //Most renderers won't care about this
 
-		float GetFrameTime() const { return frametime; }
-		float GetFrameRate() const { return framerate; }
+		float* GetFrameTime() const { return const_cast<float*>(&frametime); }
+		float* GetFrameRate() const { return const_cast<float*>(&framerate); }
+		uint32_t* GetTotalFrames() const { return const_cast<uint32_t*>(&totalFrames); }
+		void ResetCounters() {
+			frametime = 0;
+			framerate = 0;
+			totalFrames = 0;
+		}
 
 	protected:	
 		Window& hostWindow;
@@ -72,5 +76,7 @@ namespace NCL::Rendering {
 
 		float frametime;
 		float framerate;
+		uint32_t totalFrames;
+		uint32_t droppedFrames;
 	};
 }

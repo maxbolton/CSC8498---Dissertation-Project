@@ -4,6 +4,7 @@
 #include "RenderObject.h"
 #include "TextureLoader.h"
 #include "GrassTile.h"
+#include "PerfStats.h"
 
 
 
@@ -85,6 +86,8 @@ void TutorialGame::UpdateGame(float dt) {
 	renderer->Render();
 	Debug::UpdateRenderables(dt);
 
+	perfStats->PrintStats();
+
 }
 
 void TutorialGame::InitCamera() {
@@ -96,7 +99,9 @@ void TutorialGame::InitCamera() {
 }
 
 void TutorialGame::InitWorld() {
+
 	renderer->SetVerticalSync(VerticalSyncState::VSync_OFF);
+	perfStats = new PerfStats(renderer);
 	world->ClearAndErase();
 	physics->Clear();
 

@@ -4,6 +4,7 @@
 #include "PhysicsSystem.h"
 #include "GameTechRenderer.h"
 #include "GrassTile.h"
+#include "PerfStats.h"
 
 
 
@@ -52,6 +53,8 @@ namespace NCL {
 			Shader*		grassBladeShader = nullptr;
 
 			GrassTile* grassTile = nullptr;
+
+			PerfStats* perfStats = nullptr;
 		};
 	}
 }
