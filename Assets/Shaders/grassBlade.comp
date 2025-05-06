@@ -1,0 +1,24 @@
+#version 430 core
+layout(local_size_x = 256) in;
+
+layout(std430, binding = 0) buffer Positions {
+    vec4 positions[];
+};
+
+uniform uint bladesX;
+uniform uint bladesZ;
+uniform vec2 tileSize;
+
+void main() {
+    uint idx   = gl_GlobalInvocationID.x;
+    uint total = bladesX * bladesZ;
+    if (idx >= total) return;
+
+    uint ix = idx % bladesX;
+    uint iz = idx / bladesX;
+
+    float fx = (float(ix) + 0.5) / float(bladesX) * tileSize.x - tileSize.x * 0.5;
+    float fz = (float(iz) + 0.5) / float(bladesZ) * tileSize.y - tileSize.y * 0.5;
+
+    positions[idx] = vec4(fx, 3.0, fz, 123.456);
+}

@@ -4,10 +4,11 @@ using namespace Rendering;
 
 using std::string;
 
-Shader::Shader(const string& vertex, const string& fragment, const string& geometry, const string& domain, const string& hull)
+Shader::Shader(const string& vertex, const string& fragment, const string& compute, const string& geometry, const string& domain, const string& hull)
 {
 	shaderFiles[ShaderStages::Vertex]	= vertex;
 	shaderFiles[ShaderStages::Fragment]	= fragment;
+	shaderFiles[ShaderStages::Compute] = compute;
 	shaderFiles[ShaderStages::Geometry]	= geometry;
 	shaderFiles[ShaderStages::Domain]	= domain;
 	shaderFiles[ShaderStages::Hull]		= hull;

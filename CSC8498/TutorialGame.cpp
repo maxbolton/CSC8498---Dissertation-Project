@@ -37,12 +37,9 @@ void TutorialGame::InitialiseAssets() {
 	cubeMesh	= renderer->LoadMesh("cube.msh");
 	sphereMesh	= renderer->LoadMesh("sphere.msh");
 	capsuleMesh = renderer->LoadMesh("capsule.msh");
-	grassBladeMesh = renderer->LoadMesh("grassBladeCustomSingle (1).msh");
 
 	basicTex	= renderer->LoadTexture("checkerboard.png");
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag");
-	grassShader = renderer->LoadShader("grassTile.vert", "grassTile.frag");
-	grassBladeShader = renderer->LoadShader("grassBlade.vert", "grassBlade.frag");
 
 	InitCamera();
 	InitWorld();
@@ -69,24 +66,22 @@ void TutorialGame::UpdateGame(float dt) {
 
 	world->GetMainCamera().UpdateCamera(dt);
 
-	//This year we can draw debug textures as well!
-	//Debug::DrawTex(*basicTex, Vector2(10, 10), Vector2(5, 5), Debug::MAGENTA);
-
-	//Debug::Print("Test", Vector2(5, 95), Debug::RED);
 	world->UpdateWorld(dt);
 	renderer->Update(dt);
 	physics->Update(dt);
 
-	grassTile->UpdateBlades(dt);
-
-	//Debug::Print("FPS: " + std::to_string(renderer->GetFrameRate()), Vector2(10, 10), Debug::WHITE);
-	//Debug::Print("Frame Time: " + std::to_string(renderer->GetFrameTime()), Vector2(10, 30), Debug::WHITE);
-	
-
+	//grassTile->UpdateWind(dt);
 	renderer->Render();
+
+	//glDisable(GL_DEPTH_TEST);
+	//grassTile->DrawGrass();
+	//glEnable(GL_DEPTH_TEST);
+	//grassTile->Render();
+
+
 	Debug::UpdateRenderables(dt);
 
-	perfStats->PrintStats();
+	//perfStats->PrintStats();
 
 }
 
@@ -105,42 +100,18 @@ void TutorialGame::InitWorld() {
 	world->ClearAndErase();
 	physics->Clear();
 
-	//InitMixedGridWorld(15, 15, 3.5f, 3.5f);
-	//InitGameExamples();
 	InitDefaultFloor();
 
-	grassTile = new GrassTile(Vector3(0, 2, 0));
+	grassTile = new GrassTile(Vector3(0, 2, 0), true, world, Window::GetWindow());
 
-	grassTile->SetRenderObject(new RenderObject(&grassTile->GetTransform(), cubeMesh, basicTex, grassShader));
-	grassTile->GetRenderObject()->SetGrassVals(grassTile->GetXLen(), grassTile->GetZLen(), grassTile->GetMaxBlades());
-	PlaceGrassBlades(grassTile);
+
 
 	world->AddGameObject(grassTile);
+	renderer->AddTile(grassTile);
 
 }
 
-void TutorialGame::PlaceGrassBlades(GrassTile* tile) {
 
-	for (GrassBlade& blade : tile->GetBlades()) {
-		GameObject* bladeObj = new GameObject();
-		bladeObj->SetRenderObject(new RenderObject(&bladeObj->GetTransform(), grassBladeMesh, basicTex, grassBladeShader));
-		bladeObj->GetRenderObject()->SetColour(Vector4(Debug::GREEN));
-		bladeObj->GetRenderObject()->SetGrassBlade(&blade); // grass blade contains uniform data
-
-		bladeObj->GetTransform().SetPosition(blade.position);
-
-
-		// apply rotation to blade
-		Quaternion rotation = Quaternion::EulerAnglesToQuaternion(blade.faceRotation.x, blade.faceRotation.y, blade.faceRotation.z);
-		bladeObj->GetTransform().SetOrientation(rotation);
-
-
-		bladeObj->GetTransform().SetScale(Vector3(1.0f, 1.0f, 1.0f));
-		bladeObj->SetPhysicsObject(new PhysicsObject(&bladeObj->GetTransform(), bladeObj->GetBoundingVolume()));
-		bladeObj->GetPhysicsObject()->SetInverseMass(0);
-		world->AddGameObject(bladeObj);
-	}
-}
 
 /*
 

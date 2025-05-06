@@ -130,6 +130,7 @@ void GameTechRenderer::RenderFrame() {
 	RenderShadowMap();
 	RenderSkybox();
 	RenderCamera();
+	RenderGrassTiles();
 	glDisable(GL_CULL_FACE); //Todo - text indices are going the wrong way...
 	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
@@ -347,6 +348,12 @@ void GameTechRenderer::RenderCamera() {
 	glEnable(GL_CULL_FACE);
 }
 
+void GameTechRenderer::RenderGrassTiles() {
+	for (GrassTile* tile : grassTiles) {
+		tile->DrawGrass();
+	}
+}
+
 Mesh* GameTechRenderer::LoadMesh(const std::string& name) {
 	OGLMesh* mesh = new OGLMesh();
 	MshLoader::LoadMesh(name, *mesh);
@@ -496,6 +503,11 @@ Texture* GameTechRenderer::LoadTexture(const std::string& name) {
 Shader* GameTechRenderer::LoadShader(const std::string& vertex, const std::string& fragment) {
 	return new OGLShader(vertex, fragment);
 }
+
+Shader* GameTechRenderer::LoadShader(const std::string& vertex, const std::string& fragment , const std::string& comp) {
+	return new OGLShader(vertex, fragment, comp);
+}
+
 
 void GameTechRenderer::SetDebugStringBufferSizes(size_t newVertCount) {
 	if (newVertCount > textCount) {

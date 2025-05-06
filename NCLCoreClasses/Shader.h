@@ -13,6 +13,7 @@ namespace NCL::Rendering {
 		enum Type : uint32_t {
 			Vertex,
 			Fragment,
+			Compute,
 			Geometry,
 			Domain,
 			Hull,
@@ -30,7 +31,7 @@ namespace NCL::Rendering {
 		Shader() {
 			assetID = 0;
 		}
-		Shader(const std::string& vertex, const std::string& fragment, const std::string& geometry = "", const std::string& domain = "", const std::string& hull = "");
+		Shader(const std::string& vertex, const std::string& fragment, const std::string& compute = "", const std::string& geometry = "", const std::string& domain = "", const std::string& hull = "");
 		virtual ~Shader();
 
 		uint32_t GetAssetID() const {

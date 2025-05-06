@@ -1,4 +1,4 @@
-#version 400 core
+#version 430 core
 
 uniform mat4 modelMatrix 	= mat4(1.0f);
 uniform mat4 viewMatrix 	= mat4(1.0f);
@@ -9,6 +9,10 @@ layout(location = 0) in vec3 position;
 layout(location = 1) in vec4 colour;
 layout(location = 2) in vec2 texCoord;
 layout(location = 3) in vec3 normal;
+
+layout(std430, binding = 0) buffer Positions {
+	vec4 positions[];
+};
 
 uniform vec4 		objectColour = vec4(1,1,1,1);
 
@@ -46,7 +50,10 @@ vec3 BendBladeVertex(vec3 pos, float bendAmount, float maxHeight) {
 void main(void)
 {
 
-	mat4 mvp 		  = (projMatrix * viewMatrix * modelMatrix);
+	vec3 offset = positions[gl_InstanceID].xyz;
+	gl_Position = projMatrix * viewMatrix * vec4(position + offset, 1.0);
+
+	/*mat4 mvp 		  = (projMatrix * viewMatrix * modelMatrix);
 	mat3 normalMatrix = transpose ( inverse ( mat3 ( modelMatrix )));
 
 	OUT.shadowProj 	=  shadowMatrix * vec4 ( position,1);
@@ -85,5 +92,9 @@ void main(void)
 		OUT.colour = vec4(1,0,0,1);
 		gl_Position = mvp * vec4(position, 1.0);
 	}
+
+	vec3 offset = positions[gl_InstanceID].xyz;
+	vec4 worldPos = vec4(position + offset, 1.0);
+	gl_Position = mvp * worldPos;*/
 
 }

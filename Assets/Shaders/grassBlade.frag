@@ -25,7 +25,11 @@ out vec4 fragColor;
 
 void main(void)
 {
-	float shadow = 1.0; // New !
+
+	fragColor = vec4(0.0, 1.0, 0.0, 1.0);
+
+
+	/*float shadow = 1.0; // New !
 	
 	if( IN . shadowProj . w > 0.0) { // New !
 		shadow = textureProj ( shadowTex , IN . shadowProj ) * 0.5f;
@@ -64,5 +68,5 @@ void main(void)
 	
 	//fragColor.xy = IN.texCoord.xy;
 	
-	//fragColor = IN.colour;
+	//fragColor = IN.colour;*/
 }
