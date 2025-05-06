@@ -130,7 +130,11 @@ void GameTechRenderer::RenderFrame() {
 	RenderShadowMap();
 	RenderSkybox();
 	RenderCamera();
-	RenderGrassTiles();
+	if (grassTiles.size() > 0) {
+		glDisable(GL_CULL_FACE);
+		RenderGrassTiles();
+		glEnable(GL_CULL_FACE);
+	}
 	glDisable(GL_CULL_FACE); //Todo - text indices are going the wrong way...
 	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
@@ -350,7 +354,7 @@ void GameTechRenderer::RenderCamera() {
 
 void GameTechRenderer::RenderGrassTiles() {
 	for (GrassTile* tile : grassTiles) {
-		tile->DrawGrass();
+		tile->DrawGrass(&shadowTex);
 	}
 }
 

@@ -103,11 +103,10 @@ void TutorialGame::InitWorld() {
 	InitDefaultFloor();
 
 	grassTile = new GrassTile(Vector3(0, 2, 0), true, world, Window::GetWindow());
-
+	if (grassTile->GetIsCompute()) { renderer->AddTile(grassTile); }
 
 
 	world->AddGameObject(grassTile);
-	renderer->AddTile(grassTile);
 
 }
 

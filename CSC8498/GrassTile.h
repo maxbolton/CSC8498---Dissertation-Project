@@ -28,7 +28,7 @@ namespace NCL {
 			float xLen = 16.0f;
 			float yLen = 1.0f;
 			float zLen = 16.0f;
-			int maxBlades = 512;
+			int maxBlades = 1024;
 
 			std::vector<GrassBlade> blades;
 
@@ -44,15 +44,16 @@ namespace NCL {
 				
 			GLuint ssbo;
 			OGLShader* bladeShader;
+			OGLShader* instBladeShader;
 			OGLShader* bladeCompShader;
 			OGLMesh* grassBladeMesh;
 
 			OGLTexture* grassTex;
 			GLuint* shadowTex;
+			GLuint voronoiTex;
 
 			GameWorld* gameWorld;
 			Window* window;
-			//GameTechRenderer* renderer;
 
 
 			#pragma endregion
@@ -89,6 +90,7 @@ namespace NCL {
 
 				}
 				else {
+					GenVoronoiMap();
 					InitSSBO();
 				}
 
@@ -102,15 +104,20 @@ namespace NCL {
 				delete boundingVolume;
 			}
 
+			bool GetIsCompute() { return isCompute; }
+
 			#pragma region Init Methods
 
 			void InitAssets() {
 				cubeMesh = LoadMesh("cube.msh");
-				tileShader = LoadShader("grassTile.vert", "grassTile.frag");
-
-				bladeShader = LoadShader("grassBlade.vert", "grassBlade.frag");
-				bladeCompShader = LoadCompShader("grassBlade.comp");
 				grassBladeMesh = LoadMesh("grassBladeCustomSingle (1).msh");
+
+				tileShader = LoadShader("grassTile.vert", "grassTile.frag");
+				bladeShader = LoadShader("grassBlade.vert", "grassBlade.frag");
+
+				instBladeShader = LoadShader("InstGrassBlade.vert", "InstGrassBlade.frag");
+				bladeCompShader = LoadCompShader("grassBlade.comp");
+
 				grassTex = LoadTexture("checkerboard.png");
 			}
 
@@ -152,7 +159,7 @@ namespace NCL {
 						if (id >= maxBlades) return;
 						GrassBlade blade;
 						blade.id = id++;
-						blade.position = Vector3((i * (xLen / bladesX)) - xLen*0.5, this->GetTransform().GetPosition().y+(yLen*2), (j * (zLen / bladesZ)) - zLen * 0.5);
+						blade.position = Vector3((i * (xLen / bladesX)) - xLen*0.5, this->GetTransform().GetPosition().y+0.5, (j * (zLen / bladesZ)) - zLen * 0.5);
 						
 						ApplyJitter(blade);
 						
@@ -206,16 +213,9 @@ namespace NCL {
 			}
 			
 			#pragma endregion
-
 			#pragma region GPU Methods
 			
 			void InitSSBO() {
-				/*
-					Potential Issues:
-					1.	Compute Shader Compilation: Ensure that the compute shader (grassBlade.comp) compiles and links successfully.
-					2.	SSBO Binding Point Conflicts: Verify that no other SSBOs are bound to binding point 0 in the same pipeline.
-					3.	Workgroup Size: Ensure that the compute shader's declared workgroup size matches the dispatch configuration (256 in this case).
-				*/
 
 				// create & bind ssbo
 				glGenBuffers(1, &ssbo);
@@ -240,6 +240,11 @@ namespace NCL {
 				glUniform1ui(glGetUniformLocation(bladeCompShader->GetProgramID(), "bladesZ"), bladesZ);
 				glUniform2f(glGetUniformLocation(bladeCompShader->GetProgramID(), "tileSize"), xLen, zLen);
 
+				glActiveTexture(GL_TEXTURE0+1);
+				glBindTexture(GL_TEXTURE_2D, voronoiTex);
+
+				glUniform1i(glGetUniformLocation(bladeCompShader->GetProgramID(), "voronoiMap"), 1);
+
 				// Set workgroup size
 				GLuint groups = (maxBlades + 255) / 256;
 				glDispatchCompute(groups, 1, 1);
@@ -247,35 +252,94 @@ namespace NCL {
 				// make sure ssbo writes are visible to draw call
 				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
+				ReadBackSSBO();
 			}
 
-			void DrawGrass() {
+			void GenVoronoiMap() {
+				noise.SetNoiseType(FastNoiseLite::NoiseType_Cellular);
+				noise.SetCellularReturnType(FastNoiseLite::CellularReturnType_Distance2Add);
+				noise.SetSeed(7528);
+				noise.SetFrequency(1.0f);
+
+				const int width = 512;
+				const int height = 512;
+
+				std::vector<float> voronoiMap(width * height * 4);
+
+				for (int y = 0; y < height; y++) {
+					for (int x = 0; x < width; x++) {
+
+						float u = float(x) / float(width);
+						float v = float(y) / float(height);
+
+						float worldX = xLen * u;
+						float worldZ = yLen * v;
+
+						float noiseValue = noise.GetNoise(worldX, worldZ);
+
+						float offsetX = (noise.GetNoise(worldX + 0.001f, worldZ) - noiseValue) * 10.0f;
+						float offsetZ = (noise.GetNoise(worldX, worldZ + 0.001f) - noiseValue) * 10.0f;
+
+						float distance = fabs(noiseValue);
+
+						float random = rotDis(gen);
+
+						int index = (y * width + x) * 4;
+						voronoiMap[index + 0] = offsetX;
+						voronoiMap[index + 1] = offsetZ;
+						voronoiMap[index + 2] = distance;
+						voronoiMap[index + 3] = random;
+					}
+				}
+
+				glGenTextures(1, &voronoiTex);
+				glBindTexture(GL_TEXTURE_2D, voronoiTex);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, voronoiMap.data());
+
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+
+			}
+
+			void DrawGrass(GLuint* shadowTex) {
+				
 				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);
 
 				// 1) Bind grass blade vao & ssbo
-				glUseProgram(bladeShader->GetProgramID());
+				glUseProgram(instBladeShader->GetProgramID());
 				glBindVertexArray(grassBladeMesh->GetVAO());
 				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);
 
 				// 2) use render program (vert & frag)
-				glUseProgram(bladeShader->GetProgramID());
+				glUseProgram(instBladeShader->GetProgramID());
+
+				// bind main tex
+				GLint texLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "mainTex"); // mainTex is valid
 
 				glActiveTexture(GL_TEXTURE0);
 				glBindTexture(GL_TEXTURE_2D, grassTex->GetObjectID());
-
-				GLint texLoc = glGetUniformLocation(bladeShader->GetProgramID(), "mainTex");
 				glUniform1i(texLoc, 0);
 
-				GLint lightDirLoc = glGetUniformLocation(bladeShader->GetProgramID(), "lightDir");
-				GLint lightColLoc = glGetUniformLocation(bladeShader->GetProgramID(), "lightColour");
+				// bind shadow tex
+				GLint shadowTexLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "shadowTex");
+				glActiveTexture(GL_TEXTURE0 + 1);
+				glBindTexture(GL_TEXTURE_2D, *shadowTex);
+				glUniform1i(shadowTexLoc, 1);
 
-				glUniform3f(lightDirLoc, 0.5f, 1.0f, 0.2f);
+
+				GLint lightDirLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "lightDir");
+				GLint lightColLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "lightColour");
+
+				glUniform3f(lightDirLoc, 0.5f, 1.0f, 0.2f); // pass in light parameter as method args from game tech renderer
 				glUniform4f(lightColLoc, 1.0f, 1.0f, 1.0f, 0.0f);
 
 				// 3) upload view-proj mats
 
-				int projLocation = glGetUniformLocation(bladeShader->GetProgramID(), "projMatrix");
-				int viewLocation = glGetUniformLocation(bladeShader->GetProgramID(), "viewMatrix");
+				int projLocation = glGetUniformLocation(instBladeShader->GetProgramID(), "projMatrix");
+				int viewLocation = glGetUniformLocation(instBladeShader->GetProgramID(), "viewMatrix");
 
 				Matrix4 viewMatrix = gameWorld->GetMainCamera().BuildViewMatrix();
 				Matrix4 projMatrix = gameWorld->GetMainCamera().BuildProjectionMatrix(window->GetScreenAspect());
@@ -324,6 +388,7 @@ namespace NCL {
 			}
 
 			#pragma endregion
+
 		};
 
 	}

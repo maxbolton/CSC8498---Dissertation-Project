@@ -5,6 +5,8 @@ layout(std430, binding = 0) buffer Positions {
     vec4 positions[];
 };
 
+layout(binding = 1) uniform sampler2D voronoiMap;
+
 uniform uint bladesX;
 uniform uint bladesZ;
 uniform vec2 tileSize;
@@ -20,5 +22,16 @@ void main() {
     float fx = (float(ix) + 0.5) / float(bladesX) * tileSize.x - tileSize.x * 0.5;
     float fz = (float(iz) + 0.5) / float(bladesZ) * tileSize.y - tileSize.y * 0.5;
 
-    positions[idx] = vec4(fx, 3.0, fz, 123.456);
+    vec2 uv = vec2(fx + tileSize.x * 0.5, fz + tileSize.y * 0.5) / tileSize;
+
+    vec4 voronoi = texture(voronoiMap, uv);
+
+    vec2 offset = voronoi.xy;
+
+    float clumpStrength = 10.0;
+
+    fx += offset.x * clumpStrength;
+    fz += offset.y * clumpStrength;
+
+    positions[idx] = vec4(fx, 3.0, fz, voronoi.w);
 }
