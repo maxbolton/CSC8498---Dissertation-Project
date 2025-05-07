@@ -45,7 +45,7 @@ void main(void)
 		OUT.colour		= objectColour * colour;
 	}
 
-	OUT.colour = vec4(0.0, 1.0, 0.0, 1.0);
+	//OUT.colour = vec4(0.0, 1.0, 0.0, 1.0);
 
 	// derive rotation from w component //
 
@@ -64,6 +64,12 @@ void main(void)
 	vec2 rotatedOffset = rotationMat * position.xz;
 
 	vec3 worldPos = bladePos + vec3(rotatedOffset.x, position.y, rotatedOffset.y);
+
+	vec2 rotatedTexCoord;
+	rotatedTexCoord.x = texCoord.x * cosYaw - texCoord.y * sinYaw;
+	rotatedTexCoord.y = texCoord.x * sinYaw + texCoord.y * cosYaw;
+
+	OUT.texCoord = rotatedTexCoord;
 
 
 	gl_Position = mvp * vec4(worldPos, 1.0);

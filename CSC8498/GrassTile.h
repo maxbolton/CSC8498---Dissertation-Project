@@ -319,20 +319,22 @@ namespace NCL {
 
 			}
 
-			void DrawGrass(GLuint* shadowTex) {
+			void DrawGrass(GLuint* shadowTex, Vector3* lightPos, float* lightRadius, Vector4* lightColour) {
 
 				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);
 
-				// 1) Bind grass blade vao & ssbo
+				// Bind grass blade vao & ssbo
 				glUseProgram(instBladeShader->GetProgramID());
 				glBindVertexArray(grassBladeMesh->GetVAO());
 				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);
 
-				// 2) use render program (vert & frag)
+				// use render program (vert & frag)
 				glUseProgram(instBladeShader->GetProgramID());
 
 				// bind main tex
-				GLint texLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "mainTex"); // mainTex is valid
+				GLint texLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "mainTex");
+				GLint hashTexLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "hasMainTex");
+				glUniform1i(hashTexLoc, 1); // set to 1 to use main tex	
 
 				glActiveTexture(GL_TEXTURE0);
 				glBindTexture(GL_TEXTURE_2D, grassTex->GetObjectID());
@@ -345,14 +347,16 @@ namespace NCL {
 				glUniform1i(shadowTexLoc, 1);
 
 
-				GLint lightDirLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "lightDir");
+				// bind light properties
+				GLint lightPosLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "lightPos");
+				GLint lightRadLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "lightRadius");
 				GLint lightColLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "lightColour");
 
-				glUniform3f(lightDirLoc, 0.5f, 1.0f, 0.2f); // pass in light parameter as method args from game tech renderer
-				glUniform4f(lightColLoc, 1.0f, 1.0f, 1.0f, 0.0f);
+				glUniform3fv(lightPosLoc, 1, (float*)lightPos);
+				glUniform1f(lightRadLoc, *lightRadius);
+				glUniform4fv(lightColLoc, 1, (float*)lightColour);
 
-				// 3) upload view-proj mats
-
+				// upload view-proj mats
 				int projLocation = glGetUniformLocation(instBladeShader->GetProgramID(), "projMatrix");
 				int viewLocation = glGetUniformLocation(instBladeShader->GetProgramID(), "viewMatrix");
 
@@ -362,39 +366,11 @@ namespace NCL {
 				glUniformMatrix4fv(projLocation, 1, false, (float*)&projMatrix);
 				glUniformMatrix4fv(viewLocation, 1, false, (float*)&viewMatrix);
 
-				// 4) Draw n instances
+				// Draw n instances
 				glDrawElementsInstanced(GL_TRIANGLES, grassBladeMesh->GetIndexCount(), GL_UNSIGNED_INT, nullptr, maxBlades);
-			}
-
-			void DrawVoronoiTexture() {
-				glUseProgram(noiseShader->GetProgramID());
-				glBindVertexArray(cubeMesh->GetVAO());
-
-				glActiveTexture(GL_TEXTURE0);
-				glBindTexture(GL_TEXTURE_2D, voronoiTex);
-				glUniform1i(glGetUniformLocation(noiseShader->GetProgramID(), "mainTex"), 0);
-
-				Vector4 debugCol = Vector4(1.0, 1.0, 0.0, 1.0);
-
-				glUniform4fv(glGetUniformLocation(noiseShader->GetProgramID(), "objectColour"), 1, &debugCol.x);
-
-				Matrix4 modelMatrix = this->GetTransform().GetMatrix();
-				Matrix4 viewMatrix = gameWorld->GetMainCamera().BuildViewMatrix();
-				Matrix4 projMatrix = gameWorld->GetMainCamera().BuildProjectionMatrix(window->GetScreenAspect());
-
-				GLint modelLoc = glGetUniformLocation(noiseShader->GetProgramID(), "modelMatrix");
-				GLint viewLoc = glGetUniformLocation(noiseShader->GetProgramID(), "viewMatrix");
-				GLint projLoc = glGetUniformLocation(noiseShader->GetProgramID(), "projMatrix");
-
-				glUniformMatrix4fv(modelLoc, 1, false, (float*)&modelMatrix);
-				glUniformMatrix4fv(viewLoc, 1, false, (float*)&viewMatrix);
-				glUniformMatrix4fv(projLoc, 1, false, (float*)&projMatrix);
-
-				//glDrawElements(GL_TRIANGLES, cubeMesh->GetIndexCount(), GL_UNSIGNED_INT, nullptr);
 
 
 				Debug::DrawTex(*debugVoronoiTex, Vector2(12, 12), Vector2(10, 10), Vector4(1.0, 1.0, 1.0, 1.0));
-
 			}
 
 			void VerifyCompShader() {
