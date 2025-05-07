@@ -11,6 +11,8 @@ uniform uint bladesX;
 uniform uint bladesZ;
 uniform vec2 tileSize;
 
+uniform bool useVoronoiMap;
+
 void main() {
     uint idx   = gl_GlobalInvocationID.x;
     uint total = bladesX * bladesZ;
@@ -23,15 +25,47 @@ void main() {
     float fz = (float(iz) + 0.5) / float(bladesZ) * tileSize.y - tileSize.y * 0.5;
 
     vec2 uv = vec2(fx + tileSize.x * 0.5, fz + tileSize.y * 0.5) / tileSize;
+    
+    vec4 newPos = vec4(fx, 3.0, fz, 0.0);
 
-    vec4 voronoi = texture(voronoiMap, uv);
+    // if voronoiMap is not used, just return the original position
+    if (useVoronoiMap) {
 
-    vec2 offset = voronoi.xy;
+        const float pullAmount = 0.8;   // how tight clumps are
+        const float jitterAmount = 0.1; // small random variation
 
-    float clumpStrength = 10.0;
 
-    fx += offset.x * clumpStrength;
-    fz += offset.y * clumpStrength;
+        // Sample voronoi map
+        vec4 voronoi = texture(voronoiMap, uv);
+        float offsetX = voronoi.r;
+        float offsetZ = voronoi.g;
+        float clumpFactor = voronoi.b;
 
-    positions[idx] = vec4(fx, 3.0, fz, voronoi.w);
+
+        // Calculate direction to clump center
+        vec2 dirToCenter = normalize(vec2(-offsetX, -offsetZ));
+
+        // Determine strength to pull blade towards clump center
+        float pullStrength = 1.0 - clumpFactor; // blades near center get higher pull strength
+
+
+        // pull
+        newPos.x += dirToCenter.x * pullStrength * pullAmount;
+        newPos.z += dirToCenter.y * pullStrength * pullAmount;
+
+        // Outward facing angle
+        float outwardAngle = atan(-dirToCenter.y, -dirToCenter.x); // radians
+
+        // Blend between random (center) and outward (edge)
+        float bladeYaw = mix(voronoi.w, outwardAngle, clumpFactor);
+
+        // set rotation (radians)
+        newPos.w = bladeYaw;
+
+    }
+    else{
+        newPos.w = 999.99;
+    }
+
+    positions[idx] = newPos;
 }

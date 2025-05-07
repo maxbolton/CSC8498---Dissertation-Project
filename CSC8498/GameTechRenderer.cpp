@@ -135,6 +135,9 @@ void GameTechRenderer::RenderFrame() {
 		RenderGrassTiles();
 		glEnable(GL_CULL_FACE);
 	}
+
+
+
 	glDisable(GL_CULL_FACE); //Todo - text indices are going the wrong way...
 	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
@@ -355,6 +358,9 @@ void GameTechRenderer::RenderCamera() {
 void GameTechRenderer::RenderGrassTiles() {
 	for (GrassTile* tile : grassTiles) {
 		tile->DrawGrass(&shadowTex);
+		glDisable(GL_DEPTH_TEST);
+		tile->DrawVoronoiTexture();
+		glEnable(GL_DEPTH_TEST);
 	}
 }
 

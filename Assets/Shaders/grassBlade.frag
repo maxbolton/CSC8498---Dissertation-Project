@@ -25,10 +25,6 @@ out vec4 fragColor;
 
 void main(void)
 {
-
-	fragColor = vec4(0.0, 1.0, 0.0, 1.0);
-
-
 	float shadow = 1.0; // New !
 	
 	if( IN . shadowProj . w > 0.0) { // New !

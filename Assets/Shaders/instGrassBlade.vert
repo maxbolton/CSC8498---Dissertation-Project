@@ -47,25 +47,25 @@ void main(void)
 
 	OUT.colour = vec4(0.0, 1.0, 0.0, 1.0);
 
-	vec3 offset = positions[gl_InstanceID].xyz;
-	
-	float rotDeg = positions[gl_InstanceID].w;
-	float rotRad = radians(rotDeg);
+	// derive rotation from w component //
 
-	float cosR = cos(rotRad);
-	float sinR = sin(rotRad);
+	vec3 bladePos = positions[gl_InstanceID].xyz;
+	float bladeYaw = positions[gl_InstanceID].w;
+
+	float cosYaw = cos(bladeYaw);
+	float sinYaw = sin(bladeYaw);
 
 	mat2 rotationMat = mat2(
-	cosR, -sinR,
-	sinR, cosR
+	cosYaw, -sinYaw,
+	sinYaw, cosYaw
 	);
 
-	vec2 rotatedXZ = rotationMat * position.xz;
+	// apply rotation to local position
+	vec2 rotatedOffset = rotationMat * position.xz;
 
-	vec4 worldPos = vec4(rotatedXZ.x + offset.x, position.y + offset.y, rotatedXZ.y + offset.z, 1.0);
+	vec3 worldPos = bladePos + vec3(rotatedOffset.x, position.y, rotatedOffset.y);
 
 
-
-	gl_Position = mvp * worldPos;
+	gl_Position = mvp * vec4(worldPos, 1.0);
 
 }

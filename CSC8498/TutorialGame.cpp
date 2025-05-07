@@ -70,13 +70,10 @@ void TutorialGame::UpdateGame(float dt) {
 	renderer->Update(dt);
 	physics->Update(dt);
 
-	//grassTile->UpdateWind(dt);
 	renderer->Render();
 
-	//glDisable(GL_DEPTH_TEST);
-	//grassTile->DrawGrass();
-	//glEnable(GL_DEPTH_TEST);
-	//grassTile->Render();
+	
+	
 
 
 	Debug::UpdateRenderables(dt);

@@ -2,6 +2,7 @@
 
 uniform vec4 		objectColour;
 uniform sampler2D 	mainTex;
+uniform sampler2D	noiseTex;
 uniform sampler2DShadow shadowTex;
 
 uniform vec3	lightPos;
@@ -11,11 +12,6 @@ uniform vec4	lightColour;
 uniform vec3	cameraPos;
 
 uniform bool hasTexture;
-
-uniform	float xLen;
-uniform	float zLen;
-
-uniform	int MAX_BLADES;
 
 in Vertex
 {
@@ -48,41 +44,21 @@ void main(void)
 	vec4 albedo = IN.colour;
 	
 	if(hasTexture) {
-	 albedo *= texture(mainTex, IN.texCoord);
+		albedo *= texture(mainTex, IN.texCoord);
 	}
-	
+
 	albedo.rgb = pow(albedo.rgb, vec3(2.2));
+	
+		fragColor.rgb = albedo.rgb * 0.05f; //ambient
+	
+		fragColor.rgb += albedo.rgb * lightColour.rgb * lambert * shadow; //diffuse light
+	
+		fragColor.rgb += lightColour.rgb * sFactor * shadow; //specular light
+	
+		fragColor.rgb = pow(fragColor.rgb, vec3(1.0 / 2.2f));
+	
+		fragColor.a = albedo.a;
+	
+	
 
-	if(MAX_BLADES > 0){
-	// set colour to red
-	albedo = vec4(0.35, 0.05, 0.01, 1.0);
-	fragColor += vec4(xLen * 0.0001, zLen * 0.0001, 0.0, 0.0);
-
-	// place black dots in each position using xLen and zLen
-
-		for (int i = 0; i < MAX_BLADES; i++) {
-			float x = float(i / xLen) / float(xLen);
-			float y = float(i / xLen) / float(zLen);
-			fragColor += vec4(x, y, 0.0, 0.0);
-		}
-
-	}
-	
-	fragColor.rgb = albedo.rgb * 0.05f; //ambient
-	
-	fragColor.rgb += albedo.rgb * lightColour.rgb * lambert * shadow; //diffuse light
-	
-	fragColor.rgb += lightColour.rgb * sFactor * shadow; //specular light
-	
-	fragColor.rgb = pow(fragColor.rgb, vec3(1.0 / 2.2f));
-	
-	fragColor.a = albedo.a;
-
-//fragColor.rgb = IN.normal;
-
-	//fragColor = IN.colour;
-	
-	//fragColor.xy = IN.texCoord.xy;
-	
-	//fragColor = IN.colour;
 }

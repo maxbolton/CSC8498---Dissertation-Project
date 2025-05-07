@@ -28,7 +28,7 @@ namespace NCL {
 			float xLen = 16.0f;
 			float yLen = 1.0f;
 			float zLen = 16.0f;
-			int maxBlades = 1024;
+			int maxBlades = 512;
 
 			std::vector<GrassBlade> blades;
 
@@ -51,6 +51,8 @@ namespace NCL {
 			OGLTexture* grassTex;
 			GLuint* shadowTex;
 			GLuint voronoiTex;
+			OGLShader* noiseShader;
+			OGLTexture* debugVoronoiTex;
 
 			GameWorld* gameWorld;
 			Window* window;
@@ -68,8 +70,12 @@ namespace NCL {
 
 				InitAssets();
 
-				SetRenderObject(new RenderObject(&this->GetTransform(), cubeMesh, grassTex, tileShader));
+				RenderObject* renObj = new RenderObject(&this->GetTransform(), cubeMesh, grassTex, tileShader);
+				renObj->SetColour(Vector4(0.35, 0.05, 0.01, 1.0));
+
+				SetRenderObject(renObj);
 				GetRenderObject()->SetGrassVals(&xLen, &zLen, &maxBlades);
+
 
 				AABBVolume* volume = new AABBVolume(Vector3(8, 0, 8));
 				this->SetBoundingVolume((CollisionVolume*)volume);
@@ -91,7 +97,10 @@ namespace NCL {
 				}
 				else {
 					GenVoronoiMap();
+					debugVoronoiTex = new OGLTexture(voronoiTex);
 					InitSSBO();
+
+
 				}
 
 				
@@ -119,6 +128,8 @@ namespace NCL {
 				bladeCompShader = LoadCompShader("grassBlade.comp");
 
 				grassTex = LoadTexture("checkerboard.png");
+
+				noiseShader = LoadShader("noiseTex.vert", "noiseTex.frag");
 			}
 
 			OGLShader* LoadShader(const std::string& vertex, const std::string& fragment) {
@@ -215,7 +226,7 @@ namespace NCL {
 			#pragma endregion
 			#pragma region GPU Methods
 			
-			void InitSSBO() {
+			void InitSSBO(bool useVoronoi = true) {
 
 				// create & bind ssbo
 				glGenBuffers(1, &ssbo);
@@ -245,6 +256,11 @@ namespace NCL {
 
 				glUniform1i(glGetUniformLocation(bladeCompShader->GetProgramID(), "voronoiMap"), 1);
 
+
+				// set uniform bool
+				GLuint vornoiLoc = glGetUniformLocation(bladeCompShader->GetProgramID(), "useVoronoiMap");
+				glUniform1i(vornoiLoc, useVoronoi);
+
 				// Set workgroup size
 				GLuint groups = (maxBlades + 255) / 256;
 				glDispatchCompute(groups, 1, 1);
@@ -252,14 +268,18 @@ namespace NCL {
 				// make sure ssbo writes are visible to draw call
 				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-				ReadBackSSBO();
+				//ReadBackSSBO();
 			}
 
 			void GenVoronoiMap() {
+				std::random_device rd;
+				int seed = rd();
+
 				noise.SetNoiseType(FastNoiseLite::NoiseType_Cellular);
 				noise.SetCellularReturnType(FastNoiseLite::CellularReturnType_Distance2Add);
-				noise.SetSeed(7528);
-				noise.SetFrequency(1.0f);
+				noise.SetSeed(seed);
+
+				noise.SetFrequency(16.0f);
 
 				const int width = 512;
 				const int height = 512;
@@ -272,23 +292,18 @@ namespace NCL {
 						float u = float(x) / float(width);
 						float v = float(y) / float(height);
 
-						float worldX = xLen * u;
-						float worldZ = yLen * v;
+						float noiseValue = noise.GetNoise(u, v);
 
-						float noiseValue = noise.GetNoise(worldX, worldZ);
-
-						float offsetX = (noise.GetNoise(worldX + 0.001f, worldZ) - noiseValue) * 10.0f;
-						float offsetZ = (noise.GetNoise(worldX, worldZ + 0.001f) - noiseValue) * 10.0f;
+						float offsetX = (noise.GetNoise(u + 0.001f, v) - noiseValue);
+						float offsetZ = (noise.GetNoise(u, v + 0.001f) - noiseValue);
 
 						float distance = fabs(noiseValue);
-
-						float random = rotDis(gen);
 
 						int index = (y * width + x) * 4;
 						voronoiMap[index + 0] = offsetX;
 						voronoiMap[index + 1] = offsetZ;
 						voronoiMap[index + 2] = distance;
-						voronoiMap[index + 3] = random;
+						voronoiMap[index + 3] = 0; // leave empty for comp to calc rotation
 					}
 				}
 
@@ -305,7 +320,7 @@ namespace NCL {
 			}
 
 			void DrawGrass(GLuint* shadowTex) {
-				
+
 				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);
 
 				// 1) Bind grass blade vao & ssbo
@@ -349,6 +364,37 @@ namespace NCL {
 
 				// 4) Draw n instances
 				glDrawElementsInstanced(GL_TRIANGLES, grassBladeMesh->GetIndexCount(), GL_UNSIGNED_INT, nullptr, maxBlades);
+			}
+
+			void DrawVoronoiTexture() {
+				glUseProgram(noiseShader->GetProgramID());
+				glBindVertexArray(cubeMesh->GetVAO());
+
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, voronoiTex);
+				glUniform1i(glGetUniformLocation(noiseShader->GetProgramID(), "mainTex"), 0);
+
+				Vector4 debugCol = Vector4(1.0, 1.0, 0.0, 1.0);
+
+				glUniform4fv(glGetUniformLocation(noiseShader->GetProgramID(), "objectColour"), 1, &debugCol.x);
+
+				Matrix4 modelMatrix = this->GetTransform().GetMatrix();
+				Matrix4 viewMatrix = gameWorld->GetMainCamera().BuildViewMatrix();
+				Matrix4 projMatrix = gameWorld->GetMainCamera().BuildProjectionMatrix(window->GetScreenAspect());
+
+				GLint modelLoc = glGetUniformLocation(noiseShader->GetProgramID(), "modelMatrix");
+				GLint viewLoc = glGetUniformLocation(noiseShader->GetProgramID(), "viewMatrix");
+				GLint projLoc = glGetUniformLocation(noiseShader->GetProgramID(), "projMatrix");
+
+				glUniformMatrix4fv(modelLoc, 1, false, (float*)&modelMatrix);
+				glUniformMatrix4fv(viewLoc, 1, false, (float*)&viewMatrix);
+				glUniformMatrix4fv(projLoc, 1, false, (float*)&projMatrix);
+
+				//glDrawElements(GL_TRIANGLES, cubeMesh->GetIndexCount(), GL_UNSIGNED_INT, nullptr);
+
+
+				Debug::DrawTex(*debugVoronoiTex, Vector2(12, 12), Vector2(10, 10), Vector4(1.0, 1.0, 1.0, 1.0));
+
 			}
 
 			void VerifyCompShader() {
