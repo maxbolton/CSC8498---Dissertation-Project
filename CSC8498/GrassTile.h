@@ -333,12 +333,16 @@ namespace NCL {
 
 				// bind main tex
 				GLint texLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "mainTex");
-				GLint hashTexLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "hasMainTex");
-				glUniform1i(hashTexLoc, 1); // set to 1 to use main tex	
-
+				
 				glActiveTexture(GL_TEXTURE0);
 				glBindTexture(GL_TEXTURE_2D, grassTex->GetObjectID());
 				glUniform1i(texLoc, 0);
+
+				GLint hasTexLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "hasTexture");
+				glUniform1i(hasTexLoc, 1); // enable tex
+
+				GLint objColLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "objectColour");
+				glUniform4fv(objColLoc, 1, (const GLfloat*)&Debug::GREEN);
 
 				// bind shadow tex
 				GLint shadowTexLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "shadowTex");

@@ -39,13 +39,8 @@ void main(void)
 	OUT.normal 		= normalize ( normalMatrix * normalize ( normal ));
 	
 	OUT.texCoord	= texCoord;
+
 	OUT.colour		= objectColour;
-
-	if(hasVertexColours) {
-		OUT.colour		= objectColour * colour;
-	}
-
-	//OUT.colour = vec4(0.0, 1.0, 0.0, 1.0);
 
 	// derive rotation from w component //
 
