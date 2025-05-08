@@ -125,7 +125,7 @@ namespace NCL {
 				tileShader = LoadShader("grassTile.vert", "grassTile.frag");
 				bladeShader = LoadShader("grassBlade.vert", "grassBlade.frag");
 
-				instBladeShader = LoadShader("InstGrassBlade.vert", "InstGrassBlade.frag");
+				instBladeShader = LoadShader("instGrassBlade.vert", "instGrassBlade.frag");
 				bladeCompShader = LoadCompShader("grassBlade.comp");
 
 				grassTex = LoadTexture("checkerboard.png");
@@ -223,6 +223,17 @@ namespace NCL {
 					gameWorld->AddGameObject(bladeObj);
 				}
 			}
+
+			float GetMaxHeight() const {
+				float maxHeight = std::numeric_limits<float>::lowest();
+				const auto& positions = grassBladeMesh->GetPositionData();
+				for (const auto& pos : positions) {
+					if (pos.y > maxHeight) {
+						maxHeight = pos.y;
+					}
+				}
+				return maxHeight;
+			}
 			
 			#pragma endregion
 			#pragma region GPU Methods
@@ -277,7 +288,7 @@ namespace NCL {
 				// make sure ssbo writes are visible to draw call
 				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-				//ReadBackSSBO();
+				ReadBackSSBO();
 			}
 
 			void GenVoronoiMap() {
@@ -337,8 +348,6 @@ namespace NCL {
 				glUseProgram(instBladeShader->GetProgramID());
 				glBindVertexArray(grassBladeMesh->GetVAO());
 
-				// use render program (vert & frag)
-				glUseProgram(instBladeShader->GetProgramID());
 
 				// bind main tex
 				GLint texLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "mainTex");
@@ -358,6 +367,9 @@ namespace NCL {
 				//glActiveTexture(GL_TEXTURE0 + 1);
 				//glBindTexture(GL_TEXTURE_2D, *shadowTex);
 				//glUniform1i(shadowTexLoc, 1);
+
+				GLint maxHeightLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "maxHeight");
+				glUniform1f(maxHeightLoc, GetMaxHeight());
 
 
 				// bind light properties

@@ -62,9 +62,13 @@ void main() {
         float outwardAngle = atan(-dirToCenter.y, -dirToCenter.x); // radians
 
         // Blend between random (center) and outward (edge)
-        float bladeYaw = mix(voronoi.w, outwardAngle, clumpFactor);
+        float bladeYaw = mix(voronoi.g, outwardAngle, clumpFactor);
 
-        newPos.w = 0;
+
+        // sample random bend amount clamped to [0, 2]
+        float bendAmount = clamp(voronoi.b, 0.0, 1.0) * 2.2;
+
+        newPos.w = bendAmount;
         rotation = vec2(cos(bladeYaw), sin(bladeYaw));
 
     }
