@@ -14,6 +14,10 @@ layout(std430, binding = 0) buffer Positions {
 	vec4 positions[];
 };
 
+layout(std430, binding = 1) buffer Rotations {
+	vec2 rotations[];
+};
+
 uniform vec4 		objectColour = vec4(1,1,1,1);
 
 uniform bool hasVertexColours = false;
@@ -45,15 +49,13 @@ void main(void)
 	// derive rotation from w component //
 
 	vec3 bladePos = positions[gl_InstanceID].xyz;
-	float bladeYaw = positions[gl_InstanceID].w;
+	float bladeBend = positions[gl_InstanceID].w;
 
-	float cosYaw = cos(bladeYaw);
-	float sinYaw = sin(bladeYaw);
+	
 
-	mat2 rotationMat = mat2(
-	cosYaw, -sinYaw,
-	sinYaw, cosYaw
-	);
+	vec2 bladeRot = rotations[gl_InstanceID];
+	mat2 rotationMat = mat2(bladeRot.x, -bladeRot.y,
+							bladeRot.y, bladeRot.x);
 
 	// apply rotation to local position
 	vec2 rotatedOffset = rotationMat * position.xz;
@@ -61,8 +63,8 @@ void main(void)
 	vec3 worldPos = bladePos + vec3(rotatedOffset.x, position.y, rotatedOffset.y);
 
 	vec2 rotatedTexCoord;
-	rotatedTexCoord.x = texCoord.x * cosYaw - texCoord.y * sinYaw;
-	rotatedTexCoord.y = texCoord.x * sinYaw + texCoord.y * cosYaw;
+	rotatedTexCoord.x = texCoord.x * bladeRot.x - texCoord.y * bladeRot.y;
+	rotatedTexCoord.y = texCoord.x * bladeRot.y + texCoord.y * bladeRot.x;
 
 	OUT.texCoord = rotatedTexCoord;
 

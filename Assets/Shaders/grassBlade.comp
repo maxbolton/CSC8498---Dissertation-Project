@@ -5,6 +5,10 @@ layout(std430, binding = 0) buffer Positions {
     vec4 positions[];
 };
 
+layout(std430, binding = 1) buffer Rotations {
+    vec2 rotations[];
+};
+
 layout(binding = 1) uniform sampler2D voronoiMap;
 
 uniform uint bladesX;
@@ -27,6 +31,7 @@ void main() {
     vec2 uv = vec2(fx + tileSize.x * 0.5, fz + tileSize.y * 0.5) / tileSize;
     
     vec4 newPos = vec4(fx, 3.0, fz, 0.0);
+    vec2 rotation = vec2(0.0, 0.0); // default rotation
 
     // if voronoiMap is not used, just return the original position
     if (useVoronoiMap) {
@@ -59,13 +64,16 @@ void main() {
         // Blend between random (center) and outward (edge)
         float bladeYaw = mix(voronoi.w, outwardAngle, clumpFactor);
 
-        // set rotation (radians)
-        newPos.w = bladeYaw;
+        newPos.w = 0;
+        rotation = vec2(cos(bladeYaw), sin(bladeYaw));
 
     }
     else{
         newPos.w = 999.99;
+        
     }
 
     positions[idx] = newPos;
+    rotations[idx] = rotation;
+
 }

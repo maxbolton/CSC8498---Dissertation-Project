@@ -43,6 +43,7 @@ namespace NCL {
 			#pragma region Instanced Data
 				
 			GLuint ssbo;
+			GLuint rotSSBO;
 			OGLShader* bladeShader;
 			OGLShader* instBladeShader;
 			OGLShader* bladeCompShader;
@@ -228,16 +229,24 @@ namespace NCL {
 			
 			void InitSSBO(bool useVoronoi = true) {
 
-				// create & bind ssbo
+				// create ssbos
 				glGenBuffers(1, &ssbo);
+				glGenBuffers(1, &rotSSBO);
+
+				// bind pos ssbo
 				glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
 
 
-				const size_t bytesPerBlade = 16;
 				// allocate buffer
-				glBufferData(GL_SHADER_STORAGE_BUFFER, bytesPerBlade * maxBlades, nullptr, GL_DYNAMIC_DRAW);
+				glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Vector4) * maxBlades, nullptr, GL_DYNAMIC_DRAW);
 				// make buffer visible to shader (binding point 0)
 				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);
+
+
+				// bind rot ssbo
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, rotSSBO);
+				glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Vector2) * maxBlades, nullptr, GL_DYNAMIC_DRAW);
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, rotSSBO);
 
 
 				// Dispatch Compute
@@ -322,11 +331,11 @@ namespace NCL {
 			void DrawGrass(GLuint* shadowTex, Vector3* lightPos, float* lightRadius, Vector4* lightColour) {
 
 				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, rotSSBO);
 
 				// Bind grass blade vao & ssbo
 				glUseProgram(instBladeShader->GetProgramID());
 				glBindVertexArray(grassBladeMesh->GetVAO());
-				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);
 
 				// use render program (vert & frag)
 				glUseProgram(instBladeShader->GetProgramID());
@@ -344,11 +353,11 @@ namespace NCL {
 				GLint objColLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "objectColour");
 				glUniform4fv(objColLoc, 1, (const GLfloat*)&Debug::GREEN);
 
-				// bind shadow tex
-				GLint shadowTexLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "shadowTex");
-				glActiveTexture(GL_TEXTURE0 + 1);
-				glBindTexture(GL_TEXTURE_2D, *shadowTex);
-				glUniform1i(shadowTexLoc, 1);
+				//// bind shadow tex
+				//GLint shadowTexLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "shadowTex");
+				//glActiveTexture(GL_TEXTURE0 + 1);
+				//glBindTexture(GL_TEXTURE_2D, *shadowTex);
+				//glUniform1i(shadowTexLoc, 1);
 
 
 				// bind light properties

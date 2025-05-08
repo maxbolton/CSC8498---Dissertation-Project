@@ -27,10 +27,10 @@ void main(void)
 {
 	
 	float shadow = 1.0; // New !
-	
+	/*
 	if( IN . shadowProj . w > 0.0) { // New !
 		shadow = textureProj ( shadowTex , IN . shadowProj ) * 0.5f;
-	}
+	}*/
 
 
 	vec3  incident = normalize ( lightPos - IN.worldPos );
