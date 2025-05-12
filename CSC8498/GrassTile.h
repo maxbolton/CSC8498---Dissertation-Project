@@ -25,10 +25,14 @@ namespace NCL {
 
 			bool isCompute = false;
 			
-			float xLen = 16.0f;
+			float xLen = 32.0f;
 			float yLen = 1.0f;
-			float zLen = 16.0f;
-			int maxBlades = 512;
+			float zLen = 32.0f;
+			int maxBlades = 4096*2;
+
+			float windDirX = 1;
+			float windDirZ = -0.5;	
+			float windSpeed = 0.2;
 
 			std::vector<GrassBlade> blades;
 
@@ -44,16 +48,20 @@ namespace NCL {
 				
 			GLuint ssbo;
 			GLuint rotSSBO;
+			GLuint uvSSBO;
+
 			OGLShader* bladeShader;
 			OGLShader* instBladeShader;
 			OGLShader* bladeCompShader;
 			OGLMesh* grassBladeMesh;
 
 			OGLTexture* grassTex;
-			GLuint* shadowTex;
+
 			GLuint voronoiTex;
-			OGLShader* noiseShader;
 			OGLTexture* debugVoronoiTex;
+
+			GLuint perlinWindTex;
+			OGLTexture* debugPerlinWindTex;
 
 			GameWorld* gameWorld;
 			Window* window;
@@ -98,6 +106,7 @@ namespace NCL {
 				}
 				else {
 					GenVoronoiMap();
+					GenTileableWindNoise();
 					debugVoronoiTex = new OGLTexture(voronoiTex);
 					InitSSBO();
 
@@ -120,7 +129,8 @@ namespace NCL {
 
 			void InitAssets() {
 				cubeMesh = LoadMesh("cube.msh");
-				grassBladeMesh = LoadMesh("grassBladeCustomSingle (1).msh");
+				//grassBladeMesh = LoadMesh("grassBladeCustomSingle (1).msh");
+				grassBladeMesh = LoadMesh("grassBladeLeaf.msh");
 
 				tileShader = LoadShader("grassTile.vert", "grassTile.frag");
 				bladeShader = LoadShader("grassBlade.vert", "grassBlade.frag");
@@ -129,8 +139,6 @@ namespace NCL {
 				bladeCompShader = LoadCompShader("grassBlade.comp");
 
 				grassTex = LoadTexture("checkerboard.png");
-
-				noiseShader = LoadShader("noiseTex.vert", "noiseTex.frag");
 			}
 
 			OGLShader* LoadShader(const std::string& vertex, const std::string& fragment) {
@@ -238,11 +246,12 @@ namespace NCL {
 			#pragma endregion
 			#pragma region GPU Methods
 			
-			void InitSSBO(bool useVoronoi = true) {
+			void InitSSBO(bool useVoronoi = true, bool useWindNoise = true) {
 
 				// create ssbos
 				glGenBuffers(1, &ssbo);
 				glGenBuffers(1, &rotSSBO);
+				glGenBuffers(1, &uvSSBO);
 
 				// bind pos ssbo
 				glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
@@ -259,6 +268,10 @@ namespace NCL {
 				glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Vector2) * maxBlades, nullptr, GL_DYNAMIC_DRAW);
 				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, rotSSBO);
 
+				// bind uv ssbo
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, uvSSBO);
+				glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Vector2) * maxBlades, nullptr, GL_DYNAMIC_DRAW);
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, uvSSBO);
 
 				// Dispatch Compute
 
@@ -288,7 +301,7 @@ namespace NCL {
 				// make sure ssbo writes are visible to draw call
 				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-				ReadBackSSBO();
+				//ReadBackSSBO();
 			}
 
 			void GenVoronoiMap() {
@@ -339,10 +352,11 @@ namespace NCL {
 
 			}
 
-			void DrawGrass(GLuint* shadowTex, Vector3* lightPos, float* lightRadius, Vector4* lightColour) {
+			void DrawGrass(GLuint* shadowTex, Vector3* lightPos, float* lightRadius, Vector4* lightColour, float dt) {
 
 				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);
 				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, rotSSBO);
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, uvSSBO);
 
 				// Bind grass blade vao & ssbo
 				glUseProgram(instBladeShader->GetProgramID());
@@ -357,7 +371,7 @@ namespace NCL {
 				glUniform1i(texLoc, 0);
 
 				GLint hasTexLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "hasTexture");
-				glUniform1i(hasTexLoc, 1); // enable tex
+				glUniform1i(hasTexLoc, 0); // enable tex
 
 				GLint objColLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "objectColour");
 				glUniform4fv(objColLoc, 1, (const GLfloat*)&Debug::GREEN);
@@ -370,6 +384,21 @@ namespace NCL {
 
 				GLint maxHeightLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "maxHeight");
 				glUniform1f(maxHeightLoc, GetMaxHeight());
+
+				// bind wind noise texture
+				glActiveTexture(GL_TEXTURE0 + 2);
+				glBindTexture(GL_TEXTURE_2D, perlinWindTex);
+
+				glUniform1i(glGetUniformLocation(instBladeShader->GetProgramID(), "perlinWindTex"), 2);
+
+				GLuint windDir = glGetUniformLocation(instBladeShader->GetProgramID(), "windDir");
+				GLuint useWindDirLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "useWindNoise");
+
+				glUniform3f(windDir, windDirX, windDirZ, windSpeed);
+				glUniform1i(useWindDirLoc, true);
+
+				GLuint dtLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "deltaTime");
+				glUniform1f(dtLoc, dt);
 
 
 				// bind light properties
@@ -396,6 +425,7 @@ namespace NCL {
 
 
 				Debug::DrawTex(*debugVoronoiTex, Vector2(12, 12), Vector2(10, 10), Vector4(1.0, 1.0, 1.0, 1.0));
+				Debug::DrawTex(*debugPerlinWindTex, Vector2(12, 35), Vector2(10, 10), Vector4(1.0, 1.0, 1.0, 1.0));
 			}
 
 			void VerifyCompShader() {
@@ -433,6 +463,57 @@ namespace NCL {
 					std::cerr << "Failed to map SSBO for reading!" << std::endl;
 				}
 			}
+
+			void GenTileableWindNoise() {
+				std::random_device rd;
+				int seed = rd();
+
+				noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+				noise.SetSeed(seed);
+				noise.SetFrequency(0.25f); 
+
+				const int width = 512; 
+				const int height = 512;
+				const float tileSize = 16.0f;
+
+				std::vector<float> tileableNoise(width * height);
+
+				for (int y = 0; y < height; ++y) {
+					for (int x = 0; x < width; ++x) {
+						// Map pixel coordinates to noise space
+						float u = float(x) / float(width) * tileSize;
+						float v = float(y) / float(height) * tileSize;
+
+						// Wrap coordinates to make the noise tileable
+						float noiseValue = (noise.GetNoise(u, v) +
+							noise.GetNoise(u + tileSize, v) +
+							noise.GetNoise(u, v + tileSize) +
+							noise.GetNoise(u + tileSize, v + tileSize)) * 0.25f;
+
+
+						noiseValue += 1.0f; // Normalize to [0, 2]
+						noiseValue *= 0.5f; // Scale to [0, 1]
+
+
+						int index = (y * width + x);
+						tileableNoise[index] = noiseValue;
+					}
+				}
+
+				// Create OpenGL texture
+				glGenTextures(1, &perlinWindTex);
+				glBindTexture(GL_TEXTURE_2D, perlinWindTex);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, tileableNoise.data());
+
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+				// Optionally, store the texture for debugging or further use
+				debugPerlinWindTex = new OGLTexture(perlinWindTex);
+			}
+
 
 			#pragma endregion
 

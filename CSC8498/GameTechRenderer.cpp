@@ -122,7 +122,7 @@ void GameTechRenderer::LoadSkybox() {
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
-void GameTechRenderer::RenderFrame() {
+void GameTechRenderer::RenderFrame(float dt) {
 	glEnable(GL_CULL_FACE);
 	glClearColor(1, 1, 1, 1);
 	BuildObjectList();
@@ -132,7 +132,7 @@ void GameTechRenderer::RenderFrame() {
 	RenderCamera();
 	if (grassTiles.size() > 0) {
 		glDisable(GL_CULL_FACE);
-		RenderGrassTiles();
+		RenderGrassTiles(dt);
 		glEnable(GL_CULL_FACE);
 	}
 
@@ -355,9 +355,9 @@ void GameTechRenderer::RenderCamera() {
 	glEnable(GL_CULL_FACE);
 }
 
-void GameTechRenderer::RenderGrassTiles() {
+void GameTechRenderer::RenderGrassTiles(float dt) {
 	for (GrassTile* tile : grassTiles) {
-		tile->DrawGrass(&shadowTex, &lightPosition, &lightRadius, &lightColour);
+		tile->DrawGrass(&shadowTex, &lightPosition, &lightRadius, &lightColour, dt);
 	}
 }
 

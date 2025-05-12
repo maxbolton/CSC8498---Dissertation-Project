@@ -70,7 +70,7 @@ void TutorialGame::UpdateGame(float dt) {
 	renderer->Update(dt);
 	physics->Update(dt);
 
-	renderer->Render();
+	renderer->Render(dt);
 
 	
 	

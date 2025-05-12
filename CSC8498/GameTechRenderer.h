@@ -42,8 +42,8 @@ namespace NCL {
 			void NewRenderText();
 			void NewRenderTextures();
 
-			void RenderFrame()	override;
-			void RenderGrassTiles();
+			void RenderFrame(float dt)	override;
+			void RenderGrassTiles(float dt);
 
 			OGLShader*		defaultShader;
 

@@ -12,6 +12,15 @@ uniform vec3	cameraPos;
 
 uniform bool hasTexture;
 
+uniform float windDirX;
+uniform float windDirZ;
+
+uniform vec3 windDir;
+
+uniform bool useWindNoise;
+
+uniform float deltaTime;
+
 in Vertex
 {
 	vec4 colour;
@@ -60,5 +69,8 @@ void main(void)
 	fragColor.rgb = pow(fragColor.rgb, vec3(1.0 / 2.2f));
 	
 	fragColor.a = albedo.a;	
+
+	//fragColor.rgb *= clamp(IN.worldPos.y * .5, 0.0, 1.0);
+
 
 }

@@ -18,11 +18,26 @@ layout(std430, binding = 1) buffer Rotations {
 	vec2 rotations[];
 };
 
+layout(std430, binding = 2) buffer UV {
+	vec2 uvs[];
+};
+
 uniform vec4 		objectColour = vec4(1,1,1,1);
 
 uniform bool hasVertexColours = false;
 
 uniform float maxHeight;
+
+uniform sampler2D perlinWindTex;
+
+uniform float windDirX;
+uniform float windDirZ;
+
+uniform vec3 windDir;
+
+uniform bool useWindNoise;
+
+uniform float deltaTime;
 
 out Vertex
 {
@@ -71,7 +86,7 @@ void main(void)
 	mat3 normalMatrix = transpose ( inverse ( mat3 ( modelMatrix )));
 
 	OUT.shadowProj 	=  shadowMatrix * vec4 ( position,1);
-	OUT.worldPos 	= ( modelMatrix * vec4 ( position ,1)). xyz ;
+	OUT.worldPos 	= ( modelMatrix * vec4 ( position ,1)). xyz ; 
 	OUT.normal 		= normalize ( normalMatrix * normalize ( normal ));
 	OUT.colour		= objectColour;
 
@@ -98,8 +113,20 @@ void main(void)
 	// Apply rotation/bend to global coords
 	vec3 bladePos = rotated + positions[gl_InstanceID].xyz;
 
+	// calc windOffset using wind direction, deltaTime and wind speed
+	vec2 windOffset = (vec2(windDir.x, windDir.y) * deltaTime) * windDir.z;
+
+	vec4 windAmount = texture(perlinWindTex, uvs[gl_InstanceID] + windOffset);
+	if(useWindNoise)
+		OUT.colour *= vec4(windAmount.r, windAmount.r, windAmount.r, 1.0);
+
+
 	// Apply rotation to texture coords
 	OUT.texCoord = rotateTex(rotationVal);
+
+	//if (position.xyz == vec3(0.0, 0.0, 0.0)) {
+		OUT.colour *= vec4(position.xyz, 1.0);
+	//}
 
 	gl_Position = mvp * vec4(bladePos, 1.0);
 
