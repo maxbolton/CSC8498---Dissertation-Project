@@ -90,10 +90,21 @@ void main(void)
 	OUT.normal 		= normalize ( normalMatrix * normalize ( normal ));
 	OUT.colour		= objectColour;
 
+	float bendVal = 0;
 
+	// calc windOffset using wind direction, deltaTime and wind speed
+	vec2 windOffset = (vec2(windDir.x, windDir.y) * deltaTime) * windDir.z;
+
+	vec4 windAmount = texture(perlinWindTex, uvs[gl_InstanceID] + windOffset);
+	if(useWindNoise){
+		//OUT.colour *= vec4(windAmount.r, windAmount.r, windAmount.r, 1.0);
+		bendVal = windAmount.r * maxHeight;
 	
+	}
+	else{
 	// Get per blade bend amount
-	float bendVal = positions[gl_InstanceID].w;
+	bendVal = positions[gl_InstanceID].w;
+	}
 
 	// apply bend to local coords
 	vec3 bendBlade = BendBladeVertex(position, bendVal, maxHeight);
@@ -113,12 +124,7 @@ void main(void)
 	// Apply rotation/bend to global coords
 	vec3 bladePos = rotated + positions[gl_InstanceID].xyz;
 
-	// calc windOffset using wind direction, deltaTime and wind speed
-	vec2 windOffset = (vec2(windDir.x, windDir.y) * deltaTime) * windDir.z;
-
-	vec4 windAmount = texture(perlinWindTex, uvs[gl_InstanceID] + windOffset);
-	if(useWindNoise)
-		OUT.colour *= vec4(windAmount.r, windAmount.r, windAmount.r, 1.0);
+	
 
 
 	// Apply rotation to texture coords
