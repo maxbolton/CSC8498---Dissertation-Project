@@ -25,29 +25,6 @@ layout(std430, binding = 2) buffer UV {
     vec2 uvs[];
 };
 
-vec3 BendBladeVertex(vec3 pos, float bendAmount, float maxH) {
-    // How far up the blade this vertex is
-    float heightFactor = clamp(pos.y / maxH, 0.0, 1.0);
-
-    // Compute a smooth parabolic bend amount based only on height
-    float zBend = bendAmount * heightFactor * heightFactor;
-
-    // Output position: same X and Y, new Z
-    return vec3(pos.x, pos.y, zBend);
-}
-
-vec3 ApplyRotation(vec3 translatedPos, vec2 rotations){
-	
-	mat2 rotationMat = mat2(rotations.x, -rotations.y,
-							rotations.y, rotations.x);
-
-	vec3 rotatedPos;
-	rotatedPos.xz = rotationMat * translatedPos.xz;
-	rotatedPos.y = translatedPos.y;
-
-	return rotatedPos;
-}
-
 void main() {
     uint idx   = gl_GlobalInvocationID.x;
     uint total = bladesX * bladesZ;
@@ -68,7 +45,7 @@ void main() {
     if (useVoronoiMap) {
 
         const float pullAmount = 0.6;   // how tight clumps are
-        const float jitterAmount = 0.1; // small random variation
+        const float jitterAmount = 0.3; // small random variation
 
 
         // Sample voronoi map
@@ -90,13 +67,17 @@ void main() {
         newPos.z += dirToCenter.y * pullStrength * pullAmount;
 
         // Outward facing angle
-        float outwardAngle = atan(-dirToCenter.y, -dirToCenter.x); // radians
+        float outwardAngle = atan(dirToCenter.y, dirToCenter.x); // radians
+
+        float rand = fract(sin(dot(vec2(ix, iz), vec2(12.9898, 78.233))) * 43758.5453);
+
+        //rand * 2.0 * 3.14159
 
         // Blend between random (center) and outward (edge)
-        float bladeYaw = mix(124.567, outwardAngle, clumpFactor);
+        float bladeYaw = mix(123.456, outwardAngle * jitterAmount, clumpFactor);
 
 
-        // sample random bend amount clamped to [0, 2]
+        // sample random bend amount clamped to [-1, 1]
         float bendAmount = clamp(voronoi.b, 0.0, 1.0) * 2.0;
 
         newPos.w = bendAmount;

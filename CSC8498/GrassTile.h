@@ -28,11 +28,11 @@ namespace NCL {
 			float xLen = 32.0f;
 			float yLen = 1.0f;
 			float zLen = 32.0f;
-			int maxBlades = 4096*2;
+			int maxBlades = 4096;
 
 			float windDirX = 1;
-			float windDirZ = -0.5;	
-			float windSpeed = 0.2;
+			float windDirZ = -0.75;
+			float windSpeed = 0.3;
 
 			std::vector<GrassBlade> blades;
 

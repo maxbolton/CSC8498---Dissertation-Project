@@ -102,6 +102,7 @@ void main(void)
 
 	vec3 worldSpaceOffset = position + positions[gl_InstanceID].xyz;
 	vec3 localPos = position;
+
 	float randBendAmount = positions[gl_InstanceID].w;
 	vec2 rotationAmount = rotations[gl_InstanceID]; // Get blade rotation amount(radians)
 
@@ -112,50 +113,50 @@ void main(void)
 	float windSpeed = windDir.z; // wind speed
 
 	// calc windOffset using wind direction, deltaTime and wind speed
-	vec3 windOffset = (vec3(windDir.x, 0.0, windDir.y) * deltaTime)  * windSpeed;
+	vec3 windOffset = vec3(windDir.x, 0.0, windDir.y);
 						 //x direction		//z direction
 
-						   
+	
+	float c = rotationAmount.x; // cos()
+	float s = rotationAmount.y; // sin()
+	
+	mat3 bladeRot = mat3(
+		vec3( c, 0.0, -s),
+		vec3(0.0, 1.0, 0.0),
+		vec3( s, 0.0,  c)
+	);
 
-	vec4 windSample = texture(perlinWindTex, uvs[gl_InstanceID] + windOffset.xz);
-	float windNoise = windSample.r * 0.5; // get wind noise value
+	localPos *= bladeRot;
+
+	vec4 windSample = texture(perlinWindTex, uvs[gl_InstanceID] + windOffset.xz * deltaTime * windSpeed);
+	float windNoise = windSample.r; // get wind noise value
 
 	randBendAmount += windNoise; // add suttle wind noise to bend amount
-	OUT.colour *= vec4(windSample.r, windSample.r, windSample.r, 1.0);
-
-	// get vertex y position as a factor of maxHeight
-	float heightFactor = clamp(position.y / maxHeight, 0.0, 1.0);
-
-
-
-	vec3 base = vec3(0.0, 0.0, 0.0); // base pos
-	vec3 tip = vec3(0.0, maxHeight, 0.0)+ (windOffset * 1.8)  * windNoise; // max pos
-
-	
-	vec3 ctrl = mix(base, tip, 0.5)+ (-windOffset) * windNoise; // control point
-
-
-
-	localPos = BezierBladeBend(base, ctrl, tip, heightFactor);
+	OUT.colour *= vec4(windNoise, windNoise, windNoise, 1.0);
 	//localPos = BendBladeVertex(localPos, randBendAmount, maxHeight);
 	
-	//////////////////////////////////
 
+	// get vertex y position as a factor of maxHeight
+	float heightFactor = clamp(localPos.y / maxHeight, 0.0, 1.0);
 
+	vec3 P0 = vec3(0.0, 0.0, 0.0);
+	vec3 P2 = vec3(0.0, maxHeight, 0.0);// - windDir * 5  * windNoise; // max pos
+	vec3 P1 = mix(P0, P2, 0.5);// + windDir * 4.0 * windNoise ; // control point
 
+	P0 *= bladeRot;
+	P2 *= bladeRot;
+	P1 *= bladeRot;
 
+	vec3 curved = BezierBladeBend(P0, P1, P2, heightFactor);
 
-	///////////// Rotations //////////
+	vec3 windDisplacement = (-windOffset * 10) * windSpeed * windNoise * pow(heightFactor, 3.0);
 
-	// Apply rotation to local coords
-	localPos = ApplyRotation(localPos , rotationAmount);
-	
+	vec3 bent = curved + windDisplacement;
+	localPos += bent;
+
 
 	// Apply rotation to texture coords
 	OUT.texCoord = rotateTex(rotationAmount);
-	
-	//////////////////////////////////
-
 
 	// Apply shadow gradient closer to base
 	OUT.colour *= vec4(localPos, 1.0);
