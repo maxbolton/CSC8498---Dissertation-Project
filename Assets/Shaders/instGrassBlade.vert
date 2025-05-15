@@ -155,7 +155,7 @@ void main(void)
 
 	vec3 curved = BezierBladeBend(P0, P1, P2, heightFactor);
 
-	vec3 windDisplacement = (-windOffset * 10) * windSpeed * windNoise * pow(heightFactor, 3.0);
+	vec3 windDisplacement = (-windOffset * 15) * windSpeed * windNoise * pow(heightFactor, 3.0);
 
 	vec3 bent = curved + windDisplacement;
 	localPos += bent;

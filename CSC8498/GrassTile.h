@@ -19,6 +19,11 @@ namespace NCL {
 			float noiseValue;
 		};
 
+		struct BladeIndex {
+			float distance;
+			uint32_t index;
+		};
+
 		class GrassTile : public GameObject {
 			
 		private:
@@ -49,11 +54,14 @@ namespace NCL {
 			GLuint ssbo;
 			GLuint rotSSBO;
 			GLuint uvSSBO;
+			GLuint sortedSSBO;
 
 			OGLShader* bladeShader;
 			OGLShader* instBladeShader;
 			OGLShader* bladeCompShader;
 			OGLMesh* grassBladeMesh;
+			OGLShader* sortBladeComp;
+			OGLShader* initBladeSort;
 
 			OGLTexture* grassTex;
 
@@ -109,6 +117,7 @@ namespace NCL {
 					GenTileableWindNoise();
 					debugVoronoiTex = new OGLTexture(voronoiTex);
 					InitSSBO();
+					InitSortComp();
 
 
 				}
@@ -137,6 +146,8 @@ namespace NCL {
 
 				instBladeShader = LoadShader("instGrassBlade.vert", "instGrassBlade.frag");
 				bladeCompShader = LoadCompShader("grassBlade.comp");
+				sortBladeComp = LoadCompShader("bladeSort.comp");
+				initBladeSort = LoadCompShader("initBladeSort.comp");
 
 				grassTex = LoadTexture("checkerboard.png");
 			}
@@ -252,10 +263,10 @@ namespace NCL {
 				glGenBuffers(1, &ssbo);
 				glGenBuffers(1, &rotSSBO);
 				glGenBuffers(1, &uvSSBO);
+				glGenBuffers(1, &sortedSSBO);
 
 				// bind pos ssbo
 				glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-
 
 				// allocate buffer
 				glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Vector4) * maxBlades, nullptr, GL_DYNAMIC_DRAW);
@@ -272,6 +283,10 @@ namespace NCL {
 				glBindBuffer(GL_SHADER_STORAGE_BUFFER, uvSSBO);
 				glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Vector2) * maxBlades, nullptr, GL_DYNAMIC_DRAW);
 				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, uvSSBO);
+
+				// bind sorted ssbo
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, sortedSSBO);
+				glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(BladeIndex) * maxBlades, nullptr, GL_DYNAMIC_DRAW);
 
 				// Dispatch Compute
 
@@ -301,8 +316,51 @@ namespace NCL {
 				// make sure ssbo writes are visible to draw call
 				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
+				#pragma endregion
+
 				//ReadBackSSBO();
 			}
+
+			void InitSortComp() {
+
+				// set workgroup size
+				uint32_t groups = ((maxBlades + 255) / 256);
+
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sortedSSBO);
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo);
+
+				// Dispatch Compute
+				glUseProgram(initBladeSort->GetProgramID());
+				Vector3 cameraPos = gameWorld->GetMainCamera().GetPosition();
+				glUniform3fv(glGetUniformLocation(initBladeSort->GetProgramID(), "cameraPos"), 1, &cameraPos.x);
+
+
+				glDispatchCompute(groups, 1, 1);
+				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+
+				glUseProgram(sortBladeComp->GetProgramID());
+
+				GLint kLoc = glGetUniformLocation(sortBladeComp->GetProgramID(), "sortK");
+				GLint jLoc = glGetUniformLocation(sortBladeComp->GetProgramID(), "sortJ");
+
+				for (uint32_t K = 2; K <= maxBlades; K <<= 1) {
+
+					glUniform1ui(kLoc, K);
+
+					for (uint32_t J = K >> 1; J > 0; J >>=1) {
+						glUniform1ui(jLoc, J);
+						glDispatchCompute(groups, 1, 1);
+
+						glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+					}
+				}
+
+				glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
+
+				ReadBackSortedSSBO();
+			}
+
 
 			void GenVoronoiMap() {
 				std::random_device rd;
@@ -456,6 +514,24 @@ namespace NCL {
 							<< "y = " << data[i * 4 + 1] << ", "
 							<< "z = " << data[i * 4 + 2] << ", "
 							<< "w = " << data[i * 4 + 3] << std::endl;
+					}
+					glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+				}
+				else {
+					std::cerr << "Failed to map SSBO for reading!" << std::endl;
+				}
+			}
+
+			void ReadBackSortedSSBO() {
+
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, sortedSSBO);
+				void* ptr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+				if (ptr) {
+					BladeIndex* data = static_cast<BladeIndex*>(ptr);
+					for (int i = 0; i < maxBlades; ++i) {
+						std::cout << "Blade " << i << ": "
+							<< "distance = " << data[i].distance << ", "
+							<< "index = " << data[i].index << std::endl;
 					}
 					glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 				}
