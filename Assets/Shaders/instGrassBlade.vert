@@ -128,6 +128,9 @@ void main(void)
 
 	localPos *= bladeRot;
 
+	vec3 bladeDir = normalize(bladeRot * vec3(0.0, 0.0, 1.0) * bladeRot);
+	vec3 bendDir = normalize(mix(bladeDir, windOffset, 0.7)); // bias wind
+
 	vec4 windSample = texture(perlinWindTex, uvs[gl_InstanceID] + windOffset.xz * deltaTime * windSpeed);
 	float windNoise = windSample.r; // get wind noise value
 
@@ -142,6 +145,9 @@ void main(void)
 	vec3 P0 = vec3(0.0, 0.0, 0.0);
 	vec3 P2 = vec3(0.0, maxHeight, 0.0);// - windDir * 5  * windNoise; // max pos
 	vec3 P1 = mix(P0, P2, 0.5);// + windDir * 4.0 * windNoise ; // control point
+
+	P1 += bendDir * randBendAmount * 0.5; // bend amount
+	P2 += bendDir * randBendAmount; // bend amount
 
 	P0 *= bladeRot;
 	P2 *= bladeRot;
