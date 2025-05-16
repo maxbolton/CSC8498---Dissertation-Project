@@ -11,7 +11,7 @@ uniform vec3 cameraPos;
 uniform uint sortK;
 uniform uint sortJ;
 
-layout(std430, binding = 0) buffer SortedIndices {
+layout(std430, binding = 4) buffer SortedIndices {
     BladeIndex bladeIndicies[];
 };
 
@@ -20,7 +20,7 @@ void main(){
         
     // calculate distance to camera
     uint idx = gl_GlobalInvocationID.x;
-    //if (idx >= bladeIndicies.length()) return;
+    if (idx >= bladeIndicies.length()) return;
 
     uint ixj = idx ^ sortJ;
 

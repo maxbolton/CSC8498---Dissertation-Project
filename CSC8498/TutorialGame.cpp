@@ -78,7 +78,7 @@ void TutorialGame::UpdateGame(float dt) {
 
 	Debug::UpdateRenderables(dt);
 
-	//perfStats->PrintStats();
+	perfStats->UpdateStats(false);
 
 }
 
@@ -87,7 +87,7 @@ void TutorialGame::InitCamera() {
 	world->GetMainCamera().SetFarPlane(500.0f);
 	world->GetMainCamera().SetPitch(-15.0f);
 	world->GetMainCamera().SetYaw(315.0f);
-	world->GetMainCamera().SetPosition(Vector3(-15, 10, 15));
+	world->GetMainCamera().SetPosition(Vector3(-15, 5, 15));
 }
 
 void TutorialGame::InitWorld() {

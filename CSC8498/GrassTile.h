@@ -30,10 +30,10 @@ namespace NCL {
 
 			bool isCompute = false;
 			
-			float xLen = 32.0f;
+			float xLen = 128.0f;
 			float yLen = 1.0f;
-			float zLen = 32.0f;
-			int maxBlades = 4096;
+			float zLen = 128.0f;
+			int maxBlades = 4096*8;
 
 			float windDirX = 1;
 			float windDirZ = -0.75;
@@ -70,6 +70,11 @@ namespace NCL {
 
 			GLuint perlinWindTex;
 			OGLTexture* debugPerlinWindTex;
+
+			GLint kLoc;
+			GLint jLoc;
+			GLint camPosLoc;
+			uint32_t groups;
 
 			GameWorld* gameWorld;
 			Window* window;
@@ -324,43 +329,56 @@ namespace NCL {
 			void InitSortComp() {
 
 				// set workgroup size
-				uint32_t groups = ((maxBlades + 255) / 256);
+				groups = ((maxBlades + 255) / 256);
 
-				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sortedSSBO);
-				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo);
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, sortedSSBO);
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, ssbo);
+
+				camPosLoc = glGetUniformLocation(initBladeSort->GetProgramID(), "cameraPos");
+				kLoc = glGetUniformLocation(sortBladeComp->GetProgramID(), "sortK");
+				jLoc = glGetUniformLocation(sortBladeComp->GetProgramID(), "sortJ");
+
+				
+				//glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
+
+				//SortBlades();
+				//ReadBackSortedSSBO();
+			}
+
+			void SortBlades() {
+
 
 				// Dispatch Compute
 				glUseProgram(initBladeSort->GetProgramID());
-				Vector3 cameraPos = gameWorld->GetMainCamera().GetPosition();
-				glUniform3fv(glGetUniformLocation(initBladeSort->GetProgramID(), "cameraPos"), 1, &cameraPos.x);
 
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, sortedSSBO);
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, ssbo);
+
+				Vector3 cameraPos = gameWorld->GetMainCamera().GetPosition();
+				glUniform3fv(camPosLoc, 1, &cameraPos.x);
 
 				glDispatchCompute(groups, 1, 1);
 				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 
-				glUseProgram(sortBladeComp->GetProgramID());
 
-				GLint kLoc = glGetUniformLocation(sortBladeComp->GetProgramID(), "sortK");
-				GLint jLoc = glGetUniformLocation(sortBladeComp->GetProgramID(), "sortJ");
+				// Sort Blades
+				glUseProgram(sortBladeComp->GetProgramID());
 
 				for (uint32_t K = 2; K <= maxBlades; K <<= 1) {
 
 					glUniform1ui(kLoc, K);
 
-					for (uint32_t J = K >> 1; J > 0; J >>=1) {
+					for (uint32_t J = K >> 1; J > 0; J >>= 1) {
 						glUniform1ui(jLoc, J);
 						glDispatchCompute(groups, 1, 1);
 
 						glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 					}
 				}
+				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-				glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
-
-				ReadBackSortedSSBO();
 			}
-
 
 			void GenVoronoiMap() {
 				std::random_device rd;
@@ -410,20 +428,22 @@ namespace NCL {
 
 			}
 
-			void DrawGrass(GLuint* shadowTex, Vector3* lightPos, float* lightRadius, Vector4* lightColour, float dt) {
+			void DrawGrass(Vector3* lightPos, float* lightRadius, Vector4* lightColour, float dt) {
 
-				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);
-				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, rotSSBO);
-				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, uvSSBO);
+				GLuint qTotal = 0;
+				glGenQueries(1, &qTotal);
+				glBeginQuery(GL_SAMPLES_PASSED, qTotal);
+
 
 				// Bind grass blade vao & ssbo
 				glUseProgram(instBladeShader->GetProgramID());
 				glBindVertexArray(grassBladeMesh->GetVAO());
 
+				glUniform1i(glGetUniformLocation(instBladeShader->GetProgramID(), "useFront2Back"), true);
 
 				// bind main tex
 				GLint texLoc = glGetUniformLocation(instBladeShader->GetProgramID(), "mainTex");
-				
+
 				glActiveTexture(GL_TEXTURE0);
 				glBindTexture(GL_TEXTURE_2D, grassTex->GetObjectID());
 				glUniform1i(texLoc, 0);
@@ -481,9 +501,24 @@ namespace NCL {
 				// Draw n instances
 				glDrawElementsInstanced(GL_TRIANGLES, grassBladeMesh->GetIndexCount(), GL_UNSIGNED_INT, nullptr, maxBlades);
 
+				glEndQuery(GL_SAMPLES_PASSED);
 
-				Debug::DrawTex(*debugVoronoiTex, Vector2(12, 12), Vector2(10, 10), Vector4(1.0, 1.0, 1.0, 1.0));
-				Debug::DrawTex(*debugPerlinWindTex, Vector2(12, 35), Vector2(10, 10), Vector4(1.0, 1.0, 1.0, 1.0));
+
+				GLuint samplesThisFrame = 0;
+				glGetQueryObjectuiv(qTotal, GL_QUERY_RESULT, &samplesThisFrame);
+				std::cout << "Total samples: " << samplesThisFrame << std::endl;
+	
+
+			}
+
+			void DrawTile(GLuint* shadowTex, Vector3* lightPos, float* lightRadius, Vector4* lightColour, float dt) {
+
+				SortBlades();
+
+				DrawGrass(lightPos, lightRadius, lightColour, dt);
+
+				//Debug::DrawTex(*debugVoronoiTex, Vector2(12, 12), Vector2(10, 10), Vector4(1.0, 1.0, 1.0, 1.0));
+				//Debug::DrawTex(*debugPerlinWindTex, Vector2(12, 35), Vector2(10, 10), Vector4(1.0, 1.0, 1.0, 1.0));
 			}
 
 			void VerifyCompShader() {

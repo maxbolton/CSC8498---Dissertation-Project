@@ -17,6 +17,7 @@ Matrix4 biasMatrix = Matrix::Translation(Vector3(0.5f, 0.5f, 0.5f)) * Matrix::Sc
 
 GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetWindow()), gameWorld(world)	{
 	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
 
 	debugShader  = new OGLShader("debug.vert", "debug.frag");
 	shadowShader = new OGLShader("shadow.vert", "shadow.frag");
@@ -357,7 +358,7 @@ void GameTechRenderer::RenderCamera() {
 
 void GameTechRenderer::RenderGrassTiles(float dt) {
 	for (GrassTile* tile : grassTiles) {
-		tile->DrawGrass(&shadowTex, &lightPosition, &lightRadius, &lightColour, dt);
+		tile->DrawTile(&shadowTex, &lightPosition, &lightRadius, &lightColour, dt);
 	}
 }
 
