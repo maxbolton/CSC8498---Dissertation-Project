@@ -1,0 +1,97 @@
+#version 430 core
+layout(local_size_x = 256) in;
+
+// input buffers grass tile obj
+layout(binding = 1) uniform sampler2D voronoiMap;
+
+
+uniform uint bladesX;
+uniform uint bladesZ;
+uniform vec2 tileSize;
+
+uniform bool useVoronoiMap;
+
+
+// output buffers to vertex shader
+layout(std430, binding = 0) buffer Positions {
+    vec4 positions[];
+};
+
+layout(std430, binding = 1) buffer Rotations {
+    vec2 rotations[];
+};
+
+layout(std430, binding = 2) buffer UV {
+    vec2 uvs[];
+};
+
+void main() {
+    uint idx   = gl_GlobalInvocationID.x;
+    uint total = bladesX * bladesZ;
+    if (idx >= total) return;
+
+    uint ix = idx % bladesX;
+    uint iz = idx / bladesX;
+
+    float fx = (float(ix) + 0.5) / float(bladesX) * tileSize.x - tileSize.x * 0.5;
+    float fz = (float(iz) + 0.5) / float(bladesZ) * tileSize.y - tileSize.y * 0.5;
+
+    vec2 uv = vec2(fx + tileSize.x * 0.5, fz + tileSize.y * 0.5) / tileSize;
+
+    vec4 newPos = vec4(fx, 2.5, fz, 0.0);
+    vec2 rotation = vec2(0.0, 0.0); // default rotation
+
+    // if voronoiMap is not used, just return the original position
+    if (useVoronoiMap) {
+
+        const float pullAmount = 0.6;   // how tight clumps are
+        const float jitterAmount = 0.3; // small random variation
+
+
+        // Sample voronoi map
+        vec4 voronoi = texture(voronoiMap, uv);
+        float offsetX = voronoi.r;
+        float offsetZ = voronoi.g;
+        float clumpFactor = voronoi.b;
+
+
+        // Calculate direction to clump center
+        vec2 dirToCenter = normalize(vec2(-offsetX, -offsetZ));
+
+        // Determine strength to pull blade towards clump center
+        float pullStrength = 1.0 - clumpFactor; // blades near center get higher pull strength
+
+
+        // pull
+        newPos.x += dirToCenter.x * pullStrength * pullAmount;
+        newPos.z += dirToCenter.y * pullStrength * pullAmount;
+
+        // Outward facing angle
+        float outwardAngle = atan(dirToCenter.y, dirToCenter.x); // radians
+
+        float rand = fract(sin(dot(vec2(ix, iz), vec2(12.9898, 78.233))) * 43758.5453);
+
+        //rand * 2.0 * 3.14159
+
+        // Blend between random (center) and outward (edge)
+        float bladeYaw = mix(123.456, outwardAngle * jitterAmount, clumpFactor);
+
+
+        // sample random bend amount clamped to [-1, 1]
+        float bendAmount = clamp(voronoi.b, 0.0, 1.0) * 2.0;
+
+        newPos.w = bendAmount;
+        rotation = vec2(cos(bladeYaw), sin(bladeYaw));
+
+    }
+    else{
+        newPos.w = 999.99;
+        
+    }
+
+
+    positions[idx] = newPos;
+    rotations[idx] = rotation;
+    uvs[idx] = uv;
+
+}

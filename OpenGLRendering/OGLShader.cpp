@@ -16,21 +16,24 @@ using std::string;
 GLuint shaderTypes[(int)ShaderStages::MAX_SIZE] = {
 	GL_VERTEX_SHADER,
 	GL_FRAGMENT_SHADER,
+	GL_COMPUTE_SHADER,
 	GL_GEOMETRY_SHADER,
 	GL_TESS_CONTROL_SHADER,
 	GL_TESS_EVALUATION_SHADER
+
 };
 
 string shaderNames[(int)ShaderStages::MAX_SIZE] = {
 	"Vertex",
 	"Fragment",
+	"Compute",
 	"Geometry",
 	"Tess. Control",
 	"Tess. Eval"
 };
 
-OGLShader::OGLShader(const string& vertex, const string& fragment, const string& geometry, const string& domain, const string& hull) :
-	Shader(vertex, fragment, geometry, domain, hull) {
+OGLShader::OGLShader(const string& vertex, const string& fragment, const string& compute, const string& geometry, const string& domain, const string& hull) :
+	Shader(vertex, fragment, compute, geometry, domain, hull) {
 
 	for (int i = 0; i < (int)ShaderStages::MAX_SIZE; ++i) {
 		shaderIDs[i]	= 0;

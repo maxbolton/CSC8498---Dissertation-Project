@@ -43,7 +43,7 @@ namespace NCL::Rendering {
 
 	protected:			
 		void BeginFrame()	override;
-		void RenderFrame()	override;
+		void RenderFrame(float dt)	override;
 		void EndFrame()		override;
 		void SwapBuffers()  override;
 

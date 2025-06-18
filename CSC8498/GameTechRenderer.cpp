@@ -17,6 +17,7 @@ Matrix4 biasMatrix = Matrix::Translation(Vector3(0.5f, 0.5f, 0.5f)) * Matrix::Sc
 
 GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetWindow()), gameWorld(world)	{
 	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
 
 	debugShader  = new OGLShader("debug.vert", "debug.frag");
 	shadowShader = new OGLShader("shadow.vert", "shadow.frag");
@@ -122,7 +123,7 @@ void GameTechRenderer::LoadSkybox() {
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
-void GameTechRenderer::RenderFrame() {
+void GameTechRenderer::RenderFrame(float dt) {
 	glEnable(GL_CULL_FACE);
 	glClearColor(1, 1, 1, 1);
 	BuildObjectList();
@@ -130,6 +131,14 @@ void GameTechRenderer::RenderFrame() {
 	RenderShadowMap();
 	RenderSkybox();
 	RenderCamera();
+	if (grassTiles.size() > 0) {
+		glDisable(GL_CULL_FACE);
+		RenderGrassTiles(dt);
+		glEnable(GL_CULL_FACE);
+	}
+
+
+
 	glDisable(GL_CULL_FACE); //Todo - text indices are going the wrong way...
 	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
@@ -347,6 +356,12 @@ void GameTechRenderer::RenderCamera() {
 	glEnable(GL_CULL_FACE);
 }
 
+void GameTechRenderer::RenderGrassTiles(float dt) {
+	for (GrassTile* tile : grassTiles) {
+		tile->DrawTile(&shadowTex, &lightPosition, &lightRadius, &lightColour, dt);
+	}
+}
+
 Mesh* GameTechRenderer::LoadMesh(const std::string& name) {
 	OGLMesh* mesh = new OGLMesh();
 	MshLoader::LoadMesh(name, *mesh);
@@ -496,6 +511,11 @@ Texture* GameTechRenderer::LoadTexture(const std::string& name) {
 Shader* GameTechRenderer::LoadShader(const std::string& vertex, const std::string& fragment) {
 	return new OGLShader(vertex, fragment);
 }
+
+Shader* GameTechRenderer::LoadShader(const std::string& vertex, const std::string& fragment , const std::string& comp) {
+	return new OGLShader(vertex, fragment, comp);
+}
+
 
 void GameTechRenderer::SetDebugStringBufferSizes(size_t newVertCount) {
 	if (newVertCount > textCount) {

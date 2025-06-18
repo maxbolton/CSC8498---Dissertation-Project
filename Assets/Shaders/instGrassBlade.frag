@@ -2,7 +2,6 @@
 
 uniform vec4 		objectColour;
 uniform sampler2D 	mainTex;
-uniform sampler2D	noiseTex;
 uniform sampler2DShadow shadowTex;
 
 uniform vec3	lightPos;
@@ -12,6 +11,15 @@ uniform vec4	lightColour;
 uniform vec3	cameraPos;
 
 uniform bool hasTexture;
+
+uniform float windDirX;
+uniform float windDirZ;
+
+uniform vec3 windDir;
+
+uniform bool useWindNoise;
+
+uniform float deltaTime;
 
 in Vertex
 {
@@ -26,11 +34,13 @@ out vec4 fragColor;
 
 void main(void)
 {
-	float shadow = 1.0; // New !
 	
+	float shadow = 1.0; // New !
+	/*
 	if( IN . shadowProj . w > 0.0) { // New !
 		shadow = textureProj ( shadowTex , IN . shadowProj ) * 0.5f;
-	}
+	}*/
+
 
 	vec3  incident = normalize ( lightPos - IN.worldPos );
 	float lambert  = max (0.0 , dot ( incident , IN.normal )) * 0.9; 
@@ -44,21 +54,23 @@ void main(void)
 	vec4 albedo = IN.colour;
 	
 	if(hasTexture) {
-		albedo *= texture(mainTex, IN.texCoord);
-	}
+	 albedo *= texture(mainTex, IN.texCoord);
 
+	}
+	
 	albedo.rgb = pow(albedo.rgb, vec3(2.2));
 	
-		fragColor.rgb = albedo.rgb * 0.05f; //ambient
+	fragColor.rgb = albedo.rgb * 0.05f; //ambient
 	
-		fragColor.rgb += albedo.rgb * lightColour.rgb * lambert * shadow; //diffuse light
+	fragColor.rgb += albedo.rgb * lightColour.rgb * lambert * shadow; //diffuse light
 	
-		fragColor.rgb += lightColour.rgb * sFactor * shadow; //specular light
+	fragColor.rgb += lightColour.rgb * sFactor * shadow; //specular light
 	
-		fragColor.rgb = pow(fragColor.rgb, vec3(1.0 / 2.2f));
+	fragColor.rgb = pow(fragColor.rgb, vec3(1.0 / 2.2f));
 	
-		fragColor.a = albedo.a;
-	
-	
+	fragColor.a = albedo.a;	
+
+	//fragColor.rgb *= clamp(IN.worldPos.y * .5, 0.0, 1.0);
+
 
 }

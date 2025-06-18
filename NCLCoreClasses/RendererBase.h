@@ -29,7 +29,7 @@ namespace NCL::Rendering {
 		using clock = std::chrono::high_resolution_clock;
 		std::chrono::steady_clock::time_point previousTime;
 
-		void Render() {
+		void Render(float dt) {
 
 			auto currentTime = clock::now();
 			std::chrono::duration<float> elapsedTime = currentTime - previousTime;
@@ -43,7 +43,7 @@ namespace NCL::Rendering {
 
 			//assert(HasInitialised());
 			BeginFrame();
-			RenderFrame();
+			RenderFrame(dt);
 			EndFrame();
 			SwapBuffers();
 		}
@@ -53,7 +53,7 @@ namespace NCL::Rendering {
 		}
 
 		virtual void BeginFrame()	= 0;
-		virtual void RenderFrame()	= 0;
+		virtual void RenderFrame(float dt)	= 0;
 		virtual void EndFrame()		= 0;
 		virtual void SwapBuffers()	= 0;
 

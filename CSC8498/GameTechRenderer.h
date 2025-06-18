@@ -5,6 +5,7 @@
 #include "OGLMesh.h"
 
 #include "GameWorld.h"
+#include "GrassTile.h"
 
 namespace NCL {
 	namespace CSC8503 {
@@ -18,13 +19,31 @@ namespace NCL {
 			Mesh*		LoadMesh(const std::string& name);
 			Texture*	LoadTexture(const std::string& name);
 			Shader*		LoadShader(const std::string& vertex, const std::string& fragment);
+			Shader*		LoadShader(const std::string& vertex, const std::string& fragment, const std::string& comp);
+
+			Vector3 GetLightPosition() const {
+				return lightPosition;
+			}
+
+			float GetLightRadius() const {
+				return lightRadius;
+			}
+
+			Vector4 GetLightColour() const {
+				return lightColour;
+			}
+
+			void AddTile(GrassTile* tile) {
+				grassTiles.push_back(tile);
+			}
 
 		protected:
 			void NewRenderLines();
 			void NewRenderText();
 			void NewRenderTextures();
 
-			void RenderFrame()	override;
+			void RenderFrame(float dt)	override;
+			void RenderGrassTiles(float dt);
 
 			OGLShader*		defaultShader;
 
@@ -75,6 +94,7 @@ namespace NCL {
 			GLuint textColourVBO;
 			GLuint textTexVBO;
 			size_t textCount;
+			vector<GrassTile*> grassTiles;
 		};
 	}
 }

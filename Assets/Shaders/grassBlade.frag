@@ -58,11 +58,4 @@ void main(void)
 	
 	fragColor.a = albedo.a;
 
-//fragColor.rgb = IN.normal;
-
-	//fragColor = IN.colour;
-	
-	//fragColor.xy = IN.texCoord.xy;
-	
-	//fragColor = IN.colour;
 }

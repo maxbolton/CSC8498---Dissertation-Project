@@ -65,7 +65,7 @@ void OGLRenderer::BeginFrame()		{
 	glUseProgram(0);
 }
 
-void OGLRenderer::RenderFrame()		{
+void OGLRenderer::RenderFrame(float dt)		{
 
 }
 

@@ -50,8 +50,17 @@ namespace NCL {
 				file.close();
 			}
 
-			void PrintStats() {
+			void UpdateStats(bool print) {
+
 				CalcDroppedFrames();
+
+				WriteToFile();
+
+				if (print) PrintStats();
+				
+			}
+
+			void PrintStats() {
 
 				//clear console
 				system("cls");
@@ -63,7 +72,6 @@ namespace NCL {
 				std::cout << "Dropped frames@60hz: " << droppedFrames60 << std::endl;
 				std::cout << "Dropped frames@120hz: " << droppedFrames120 << std::endl;
 
-				WriteToFile();
 			}
 
 			void CalcDroppedFrames() {
